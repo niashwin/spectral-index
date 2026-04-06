@@ -1256,10 +1256,11 @@
                 <th data-sort="head_dim">Head Dim <span class="sort-arrow">&#9650;</span></th>
                 <th data-sort="layers">Layers <span class="sort-arrow">&#9650;</span></th>
                 <th data-sort="n_kv_heads">KV Heads <span class="sort-arrow">&#9650;</span></th>
-                <th data-sort="key_deff">Key d_eff <span class="sort-arrow">&#9650;</span></th>
-                <th data-sort="val_deff">Val d_eff <span class="sort-arrow">&#9650;</span></th>
-                <th data-sort="key_pct">Key % <span class="sort-arrow">&#9650;</span></th>
-                <th data-sort="kappa">Kappa <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="key_pct">Key Signal % <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="val_pct">Val Signal % <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="key_deff">Key d<sub>eff</sub> <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="val_deff">Val d<sub>eff</sub> <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="kappa">&kappa; <span class="sort-arrow">&#9650;</span></th>
               </tr>
             </thead>
             <tbody id="leaderboard-body"></tbody>
@@ -1296,7 +1297,7 @@
 
       <!-- Source Attribution -->
       <p style="font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-5); line-height: 1.7;">
-        Source: Fresh measurements on NVIDIA B200 GPU, April 2026. 100 calibration sequences from WikiText-103 per model. All code and raw data at <a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener">github.com/niashwin/spectral-index</a>.
+        Source: Fresh measurements on NVIDIA B200 GPU, April 2026. 100 calibration sequences from WikiText-103 per model. All signal percentages are normalized to head_dim (d<sub>eff</sub>&nbsp;/&nbsp;head_dim) for cross-model comparison. Methodology from <a href="https://github.com/niashwin/spectralquant" target="_blank" rel="noopener" style="color: var(--color-primary);">SpectralQuant</a> (<a href="https://arxiv.org/abs/2504.19874" target="_blank" rel="noopener" style="color: var(--color-primary);">paper</a>). Raw data and measurement code at <a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener" style="color: var(--color-primary);">github.com/niashwin/spectral-index</a>.
       </p>
     </div>
   </section>
@@ -1393,24 +1394,24 @@
           <div class="method-block-body">
             <div class="def-list">
               <div class="def-item">
-                <div class="def-item-term">d_eff (key)</div>
-                <div class="def-item-desc">The effective dimensionality of key vectors. Lower = more concentrated signal = better compression potential. Across all 128-dim models measured, key d<sub>eff</sub> ranges from <strong>3.23</strong> (Qwen 72B) to <strong>5.69</strong> (Mistral Small 24B).</div>
+                <div class="def-item-term">Key Signal % &mdash; primary metric</div>
+                <div class="def-item-desc">The fraction of head dimensions that carry meaningful signal in key vectors, normalized to head size: d<sub>eff</sub>&nbsp;/&nbsp;head_dim. <strong>This is the number to compare across models</strong>, because it accounts for different head dimensions (128 for most models, 256 for Gemma). Lower = more concentrated = more compressible. A model at 2.5% is using 2.5% of its capacity for key selection &mdash; the other 97.5% is noise that can be safely compressed. Across all 14 models: <strong>2.5%</strong> (Qwen 72B) to <strong>4.5%</strong> (Mistral Small 24B). If you&rsquo;re choosing a model for KV-compressed deployment, lower key signal % means cheaper inference.</div>
               </div>
               <div class="def-item">
-                <div class="def-item-term">d_eff (value)</div>
-                <div class="def-item-desc">The effective dimensionality of value vectors. Consistently <strong>10–15&times;</strong> larger than keys. This asymmetry is fundamental: keys implement a selection mechanism ("what is relevant?"), which is inherently low-dimensional. Values implement information retrieval ("what content to return?"), which requires higher-dimensional capacity.</div>
+                <div class="def-item-term">Val Signal % &mdash; secondary metric</div>
+                <div class="def-item-desc">Same normalization for value vectors. Consistently <strong>10&ndash;15&times; larger</strong> than keys &mdash; typically 30&ndash;50% of head dimensions carry meaningful variance. Values are fundamentally harder to compress. Any strategy that treats keys and values identically is leaving performance on the table.</div>
               </div>
               <div class="def-item">
-                <div class="def-item-term">Key %</div>
-                <div class="def-item-desc">d<sub>eff</sub> / head_dim — the fraction of dimensions carrying signal. The universal finding: <strong>~3% for keys</strong>. This is the central empirical result.</div>
+                <div class="def-item-term">Raw d<sub>eff</sub> (key &amp; value)</div>
+                <div class="def-item-desc">The unnormalized effective dimensionality: how many eigenvectors carry meaningful weight. For 128-dim heads, key d<sub>eff</sub> &asymp; 3&ndash;5. For Gemma&rsquo;s 256-dim heads, key d<sub>eff</sub> &asymp; 7&ndash;8 &mdash; twice the number, same ~3% ratio. <strong>Always compare the normalized % across models</strong>, not raw d<sub>eff</sub>, unless comparing models with identical head_dim.</div>
               </div>
               <div class="def-item">
-                <div class="def-item-term">Kappa (&kappa;)</div>
-                <div class="def-item-desc">The spectral gap ratio. Values near 1.2 mean a clean but gradual boundary between signal and noise. Some models (especially smaller Qwen variants) exhibit very high kappa from near-zero eigenvalues in early layers.</div>
+                <div class="def-item-term">&kappa; (Kappa) &mdash; Spectral Gap</div>
+                <div class="def-item-desc">The ratio between the last &ldquo;signal&rdquo; eigenvalue and the first &ldquo;noise&rdquo; eigenvalue: &lambda;<sub>d<sub>eff</sub></sub>&nbsp;/&nbsp;&lambda;<sub>d<sub>eff</sub>+1</sub>. Measures how sharp the cliff is between useful and useless dimensions. &kappa;&nbsp;&asymp;&nbsp;1.2 means a gradual transition. &kappa;&nbsp;&gt;&nbsp;100 (some Qwen models) means a near-total cliff &mdash; eigenvalues drop to essentially zero. Both work for compression, but very high &kappa; models are especially suited to hard-threshold methods that simply discard all dimensions below d<sub>eff</sub>.</div>
               </div>
               <div class="def-item">
-                <div class="def-item-term">Why keys &ne; values</div>
-                <div class="def-item-desc">The KV asymmetry is perhaps the most important finding. Keys answer "what is this token about?" — a question with ~4 independent axes (recency, semantic category, syntactic role, domain). Values answer "what information does this token contribute?" — which requires the full representational capacity of the model. This asymmetry determines optimal compression strategy: <strong>compress keys aggressively, treat values more carefully</strong>.</div>
+                <div class="def-item-term">The Key &ne; Value Asymmetry</div>
+                <div class="def-item-desc">The most actionable finding. Keys implement <strong>selection</strong> (&ldquo;which tokens matter?&rdquo;) with ~4 independent axes: recency, semantic similarity, syntactic role, domain. Values implement <strong>information retrieval</strong> (&ldquo;what content to return?&rdquo;) encoding dozens of linguistic and factual properties. Practical implication: <strong>compress keys to 2&ndash;3 bits, keep values at 3&ndash;4 bits</strong>. This asymmetric strategy, demonstrated in <a href="https://github.com/niashwin/spectralquant" target="_blank" rel="noopener" style="color: var(--color-primary);">SpectralQuant</a> (<a href="https://arxiv.org/abs/2504.19874" target="_blank" rel="noopener" style="color: var(--color-primary);">paper</a>), achieves better quality than uniform compression at lower bitrate.</div>
               </div>
             </div>
           </div>
@@ -1431,6 +1432,9 @@
             </ol>
             <p>The result on <strong>Qwen 2.5-14B</strong>: cosine similarity <code>0.9485</code> vs TurboQuant's <code>0.9226</code> at <strong>5.95&times; compression</strong> vs 5.02&times; — simultaneously better quality and better compression. This isn't possible without knowing the spectral structure first.</p>
             <p>The leaderboard is the first step: measuring which models have exploitable structure, and how much.</p>
+            <p style="margin-top: var(--space-4); padding: var(--space-4); background: var(--color-surface-2); border-radius: var(--radius-md); border-left: 3px solid var(--color-accent-teal);">
+              <strong>Further reading:</strong> The full SpectralQuant method, theoretical analysis, and benchmark results are in the <a href="https://github.com/niashwin/spectralquant" target="_blank" rel="noopener" style="color: var(--color-primary);">SpectralQuant repository</a> and <a href="https://arxiv.org/abs/2504.19874" target="_blank" rel="noopener" style="color: var(--color-primary);">paper</a> (Gopinath, NeurIPS 2026). The measurement code used for this leaderboard is at <a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener" style="color: var(--color-primary);">github.com/niashwin/spectral-index</a>.
+            </p>
           </div>
         </div>
 
@@ -1808,6 +1812,7 @@ python -m src.measure \
     // Compute derived fields
     models.forEach(m => {
       m.key_pct = (m.key_deff / m.head_dim * 100);
+      m.val_pct = m.val_deff !== null ? (m.val_deff / m.head_dim * 100) : null;
     });
 
     // Sort by key_pct ascending (most concentrated first)
@@ -1847,6 +1852,8 @@ python -m src.measure \
       const maxBar = Math.max(...data.map(m => m.key_pct));
       tbody.innerHTML = data.map(m => {
         const valDisplay = m.val_deff !== null ? m.val_deff.toFixed(1) : '\u2014';
+        const valPctDisplay = m.val_pct !== null ? m.val_pct.toFixed(1) + '%' : '\u2014';
+        const kappaDisplay = m.kappa > 100 ? '>100' : m.kappa.toFixed(2);
         return `
         <tr data-model="${m.name}" data-family="${m.family}">
           <td class="rank-cell ${m.rank <= 3 ? 'rank-' + m.rank : ''}">${m.rank}</td>
@@ -1858,15 +1865,16 @@ python -m src.measure \
           <td><span style="font-family: var(--font-mono);">${m.head_dim}</span></td>
           <td><span style="font-family: var(--font-mono); color: var(--color-text-muted);">${m.layers}</span></td>
           <td><span style="font-family: var(--font-mono); color: var(--color-text-muted);">${m.n_kv_heads}</span></td>
-          <td><span class="deff-value" style="color: var(--color-accent-teal);">${m.key_deff.toFixed(2)}</span></td>
-          <td><span class="deff-value" style="color: var(--color-accent-violet);">${valDisplay}</span></td>
           <td>
             <div class="deff-bar-cell">
               <div class="deff-bar" style="width: ${(m.key_pct / maxBar * 100).toFixed(0)}%; min-width: 8px; max-width: 80px;"></div>
-              <span class="pct-text">${m.key_pct.toFixed(1)}%</span>
+              <span class="pct-text" style="color: var(--color-accent-teal); font-weight: 600;">${m.key_pct.toFixed(1)}%</span>
             </div>
           </td>
-          <td><span style="font-family: var(--font-mono); color: var(--color-accent-blue);">${m.kappa.toFixed(3)}</span></td>
+          <td><span class="pct-text" style="color: var(--color-accent-violet);">${valPctDisplay}</span></td>
+          <td><span style="font-family: var(--font-mono); color: var(--color-text-muted); font-size: var(--text-xs);">${m.key_deff.toFixed(2)}</span></td>
+          <td><span style="font-family: var(--font-mono); color: var(--color-text-muted); font-size: var(--text-xs);">${valDisplay}</span></td>
+          <td><span style="font-family: var(--font-mono); color: var(--color-accent-blue);">${kappaDisplay}</span></td>
         </tr>`;
       }).join('');
 
@@ -1969,23 +1977,29 @@ python -m src.measure \
 
       // Stats
       const valDeffDisplay = model.val_deff !== null ? model.val_deff.toFixed(1) : '\u2014';
+      const valPctDisplay = model.val_pct !== null ? model.val_pct.toFixed(1) + '%' : '\u2014';
+      const kappaDisplay = model.kappa > 100 ? '>100' : model.kappa.toFixed(2);
       const statsEl = document.getElementById('detail-stats');
       statsEl.innerHTML = `
         <div class="detail-stat">
-          <div class="detail-stat-label">Key d_eff</div>
-          <div class="detail-stat-value" style="color: var(--color-accent-teal);">${model.key_deff.toFixed(2)}</div>
+          <div class="detail-stat-label">Key Signal %</div>
+          <div class="detail-stat-value" style="color: var(--color-accent-teal); font-size: var(--text-xl);">${model.key_pct.toFixed(1)}%</div>
         </div>
         <div class="detail-stat">
-          <div class="detail-stat-label">Value d_eff</div>
-          <div class="detail-stat-value" style="color: var(--color-accent-violet);">${valDeffDisplay}</div>
+          <div class="detail-stat-label">Val Signal %</div>
+          <div class="detail-stat-value" style="color: var(--color-accent-violet); font-size: var(--text-xl);">${valPctDisplay}</div>
         </div>
         <div class="detail-stat">
-          <div class="detail-stat-label">Key / head_dim</div>
-          <div class="detail-stat-value">${model.key_pct.toFixed(1)}%</div>
+          <div class="detail-stat-label">Key d<sub>eff</sub> (raw)</div>
+          <div class="detail-stat-value" style="font-size: var(--text-base);">${model.key_deff.toFixed(2)} / ${model.head_dim}</div>
         </div>
         <div class="detail-stat">
-          <div class="detail-stat-label">Spectral Gap (kappa)</div>
-          <div class="detail-stat-value" style="color: var(--color-accent-blue);">${model.kappa.toFixed(3)}</div>
+          <div class="detail-stat-label">Val d<sub>eff</sub> (raw)</div>
+          <div class="detail-stat-value" style="font-size: var(--text-base);">${valDeffDisplay} / ${model.head_dim}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">&kappa; (Spectral Gap)</div>
+          <div class="detail-stat-value" style="color: var(--color-accent-blue);">${kappaDisplay}</div>
         </div>
         <div class="detail-stat">
           <div class="detail-stat-label">Head Dim</div>
