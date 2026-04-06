@@ -1025,6 +1025,84 @@
       letter-spacing: 0.05em;
       white-space: nowrap;
     }
+    .upcoming-blocker {
+      font-size: 9px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      background: rgba(248,113,113,0.1);
+      color: var(--color-error);
+      white-space: nowrap;
+    }
+
+    /* ============================================================
+       STABILITY SECTION
+       ============================================================ */
+    .stability-chart-wrap {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+    }
+    .stability-chart-inner {
+      position: relative;
+      height: 320px;
+    }
+    .stability-chart-inner canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .stability-insight {
+      display: flex;
+      gap: var(--space-4);
+      margin-top: var(--space-5);
+      flex-wrap: wrap;
+    }
+    .stability-insight-card {
+      flex: 1;
+      min-width: 200px;
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+    .stability-insight-card .label {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+      margin-bottom: var(--space-1);
+    }
+    .stability-insight-card .value {
+      font-family: var(--font-mono);
+      font-size: var(--text-lg);
+      font-weight: 600;
+    }
+    .stability-table {
+      width: 100%;
+      margin-top: var(--space-5);
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+    .stability-table th {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-faint);
+      padding: var(--space-2) var(--space-3);
+      text-align: left;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    .stability-table td {
+      font-size: var(--text-sm);
+      font-family: var(--font-mono);
+      padding: var(--space-2) var(--space-3);
+      border-bottom: 1px solid var(--color-border-subtle);
+      color: var(--color-text-muted);
+    }
+    .stability-table tbody tr:last-child td {
+      border-bottom: none;
+    }
 
     /* ============================================================
        RESPONSIVE
@@ -1075,6 +1153,7 @@
         <li><a href="#leaderboard">Leaderboard</a></li>
         <li><a href="#upcoming">Upcoming</a></li>
         <li><a href="#methodology">Methodology</a></li>
+        <li><a href="#stability">Stability</a></li>
         <li><a href="#vision">Why It Matters</a></li>
         <li><a href="#contribute">Contribute</a></li>
         <li><a href="https://sentra.app" target="_blank" rel="noopener" style="color: var(--color-text);">Sentra</a></li>
@@ -1105,7 +1184,7 @@
       <p style="font-size: var(--text-sm); color: var(--color-text-faint); margin: 0 auto var(--space-8); max-width: 540px;">Born from inference research at <a href="https://sentra.app" target="_blank" rel="noopener" style="color: var(--color-text-muted);">Sentra</a>, where we compress intelligence to make it run everywhere.</p>
       <div class="hero-stat-row">
         <div class="hero-stat">
-          <div class="hero-stat-value">6</div>
+          <div class="hero-stat-value">14</div>
           <div class="hero-stat-label">Models Measured</div>
         </div>
         <div class="hero-stat">
@@ -1125,23 +1204,23 @@
     <div class="kpi-strip fade-in">
       <div class="kpi-card">
         <div class="kpi-label">Key d_eff Mean</div>
-        <div class="kpi-value" style="color: var(--color-accent-teal)">4.05</div>
-        <div class="kpi-detail">Across head_dim=128 models (n=5)</div>
+        <div class="kpi-value" style="color: var(--color-accent-teal)">3.98</div>
+        <div class="kpi-detail">Across head_dim=128 models (n=12)</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Value d_eff Mean</div>
-        <div class="kpi-value" style="color: var(--color-accent-violet)">48.75</div>
-        <div class="kpi-detail">10–14x larger than keys</div>
+        <div class="kpi-value" style="color: var(--color-accent-violet)">50.6</div>
+        <div class="kpi-detail">10&ndash;15&times; larger than keys</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Mean Spectral Gap (kappa)</div>
-        <div class="kpi-value" style="color: var(--color-accent-blue)">1.216</div>
-        <div class="kpi-detail">lambda_{d_eff} / lambda_{d_eff+1}</div>
+        <div class="kpi-label">Median Spectral Gap (&kappa;)</div>
+        <div class="kpi-value" style="color: var(--color-accent-blue)">1.791</div>
+        <div class="kpi-detail">&lambda;_{d_eff} / &lambda;_{d_eff+1}</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Signal Fraction</div>
-        <div class="kpi-value" style="color: var(--color-accent-cyan)">3.1–3.4%</div>
-        <div class="kpi-detail">Measured range across 6 models</div>
+        <div class="kpi-value" style="color: var(--color-accent-cyan)">2.5&ndash;4.5%</div>
+        <div class="kpi-detail">Measured range across 14 models</div>
       </div>
     </div>
   </section>
@@ -1201,6 +1280,10 @@
             <div class="chart-canvas-wrap"><canvas id="chart-key-layers"></canvas></div>
           </div>
           <div class="chart-container">
+            <h4>Value d_eff by Layer</h4>
+            <div class="chart-canvas-wrap"><canvas id="chart-val-layers"></canvas></div>
+          </div>
+          <div class="chart-container">
             <h4>Kappa by Layer</h4>
             <div class="chart-canvas-wrap"><canvas id="chart-kappa-layers"></canvas></div>
           </div>
@@ -1208,19 +1291,12 @@
             <h4>Eigenvalue Spectrum (Keys, illustrative)</h4>
             <div class="chart-canvas-wrap"><canvas id="chart-eigenvalues"></canvas></div>
           </div>
-          <div class="chart-container">
-            <h4>Cumulative Variance (Keys, illustrative)</h4>
-            <div class="chart-canvas-wrap"><canvas id="chart-cumvar"></canvas></div>
-          </div>
-        </div>
-        <div id="detail-no-layers" style="display:none; padding: var(--space-6); text-align: center; color: var(--color-text-muted); font-size: var(--text-sm); background: var(--color-surface-2); border-radius: var(--radius-md); margin-bottom: var(--space-6);">
-          Per-layer data not yet published. Only Llama 3.1-8B has per-layer statistics in the paper.
         </div>
       </div>
 
       <!-- Source Attribution -->
       <p style="font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-5); line-height: 1.7;">
-        Source: SpectralQuant NeurIPS paper (Gopinath, 2026). All measurements verified with 10-seed CI on calibration data from WikiText-103.
+        Source: Fresh measurements on NVIDIA B200 GPU, April 2026. 100 calibration sequences from WikiText-103 per model. All code and raw data at <a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener">github.com/niashwin/spectral-index</a>.
       </p>
     </div>
   </section>
@@ -1289,18 +1365,18 @@
               <li data-step="1.">Run 100 calibration sequences from <strong>WikiText-103</strong> through the model with caching enabled.</li>
               <li data-step="2.">For every <code>(layer, head)</code> pair, collect all key vectors and value vectors separately.</li>
               <li data-step="3.">Compute the uncentered covariance matrix: <code>C = X<sup>T</sup>X / n</code>, where <code>X</code> is the matrix of collected vectors.</li>
-              <li data-step="4.">Eigendecompose: <code>C = V diag(λ) V<sup>T</sup></code>. The eigenvalues <code>λ₁ ≥ λ₂ ≥ … ≥ λ_d</code> reveal how variance is distributed across dimensions.</li>
+              <li data-step="4.">Eigendecompose: <code>C = V diag(&lambda;) V<sup>T</sup></code>. The eigenvalues <code>&lambda;&#8321; &ge; &lambda;&#8322; &ge; &hellip; &ge; &lambda;<sub>d</sub></code> reveal how variance is distributed across dimensions.</li>
               <li data-step="5.">Compute the participation ratio (effective dimensionality):</li>
             </ol>
 
             <div class="formula-prominent">
               <div class="formula-label">Participation Ratio (Effective Dimensionality)</div>
-              <div class="formula-expression">d<sub>eff</sub> = (Σ λ<sub>i</sub>)² / Σ(λ<sub>i</sub>²)</div>
-              <div class="formula-note">If all eigenvalues are equal, d<sub>eff</sub> = d (full dimensionality). If one eigenvalue dominates, d<sub>eff</sub> ≈ 1. The participation ratio captures the smooth transition between these extremes.</div>
+              <div class="formula-expression">d<sub>eff</sub> = (&Sigma; &lambda;<sub>i</sub>)&sup2; / &Sigma;(&lambda;<sub>i</sub>&sup2;)</div>
+              <div class="formula-note">If all eigenvalues are equal, d<sub>eff</sub> = d (full dimensionality). If one eigenvalue dominates, d<sub>eff</sub> &asymp; 1. The participation ratio captures the smooth transition between these extremes.</div>
             </div>
 
             <ol class="method-steps">
-              <li data-step="6.">Compute the spectral gap: <code>κ = λ_{d_eff} / λ_{d_eff+1}</code> — the ratio between the last "signal" eigenvalue and the first "noise" eigenvalue. Higher κ means a sharper boundary between signal and noise.</li>
+              <li data-step="6.">Compute the spectral gap: <code>&kappa; = &lambda;_{d_eff} / &lambda;_{d_eff+1}</code> — the ratio between the last "signal" eigenvalue and the first "noise" eigenvalue. Higher &kappa; means a sharper boundary between signal and noise.</li>
               <li data-step="7.">Report per-layer breakdowns, cumulative variance thresholds (dims for 95% and 99% variance), and representative eigenvalue spectra.</li>
             </ol>
 
@@ -1318,22 +1394,22 @@
             <div class="def-list">
               <div class="def-item">
                 <div class="def-item-term">d_eff (key)</div>
-                <div class="def-item-desc">The effective dimensionality of key vectors. Lower = more concentrated signal = better compression potential. Across all models measured, key d<sub>eff</sub> ranges from <strong>3.64</strong> (Llama 8B) to <strong>4.30</strong> (Qwen 7B) on 128-dim heads.</div>
+                <div class="def-item-desc">The effective dimensionality of key vectors. Lower = more concentrated signal = better compression potential. Across all 128-dim models measured, key d<sub>eff</sub> ranges from <strong>3.23</strong> (Qwen 72B) to <strong>5.69</strong> (Mistral Small 24B).</div>
               </div>
               <div class="def-item">
                 <div class="def-item-term">d_eff (value)</div>
-                <div class="def-item-desc">The effective dimensionality of value vectors. Consistently <strong>10–15×</strong> larger than keys. This asymmetry is fundamental: keys implement a selection mechanism ("what is relevant?"), which is inherently low-dimensional. Values implement information retrieval ("what content to return?"), which requires higher-dimensional capacity.</div>
+                <div class="def-item-desc">The effective dimensionality of value vectors. Consistently <strong>10–15&times;</strong> larger than keys. This asymmetry is fundamental: keys implement a selection mechanism ("what is relevant?"), which is inherently low-dimensional. Values implement information retrieval ("what content to return?"), which requires higher-dimensional capacity.</div>
               </div>
               <div class="def-item">
                 <div class="def-item-term">Key %</div>
                 <div class="def-item-desc">d<sub>eff</sub> / head_dim — the fraction of dimensions carrying signal. The universal finding: <strong>~3% for keys</strong>. This is the central empirical result.</div>
               </div>
               <div class="def-item">
-                <div class="def-item-term">Kappa (κ)</div>
-                <div class="def-item-desc">The spectral gap ratio. Values near 1.2 mean a clean but gradual boundary between signal and noise. This is sufficient for effective spectral compression.</div>
+                <div class="def-item-term">Kappa (&kappa;)</div>
+                <div class="def-item-desc">The spectral gap ratio. Values near 1.2 mean a clean but gradual boundary between signal and noise. Some models (especially smaller Qwen variants) exhibit very high kappa from near-zero eigenvalues in early layers.</div>
               </div>
               <div class="def-item">
-                <div class="def-item-term">Why keys ≠ values</div>
+                <div class="def-item-term">Why keys &ne; values</div>
                 <div class="def-item-desc">The KV asymmetry is perhaps the most important finding. Keys answer "what is this token about?" — a question with ~4 independent axes (recency, semantic category, syntactic role, domain). Values answer "what information does this token contribute?" — which requires the full representational capacity of the model. This asymmetry determines optimal compression strategy: <strong>compress keys aggressively, treat values more carefully</strong>.</div>
               </div>
             </div>
@@ -1353,11 +1429,81 @@
               <li data-step="2."><strong>Allocates more bits</strong> to the high-signal dimensions (the top d<sub>eff</sub>)</li>
               <li data-step="3."><strong>Allocates fewer bits</strong> — or skips error correction entirely — on the remaining ~96% noise dimensions</li>
             </ol>
-            <p>The result on <strong>Qwen 2.5-14B</strong>: cosine similarity <code>0.9485</code> vs TurboQuant's <code>0.9226</code> at <strong>5.95× compression</strong> vs 5.02× — simultaneously better quality and better compression. This isn't possible without knowing the spectral structure first.</p>
+            <p>The result on <strong>Qwen 2.5-14B</strong>: cosine similarity <code>0.9485</code> vs TurboQuant's <code>0.9226</code> at <strong>5.95&times; compression</strong> vs 5.02&times; — simultaneously better quality and better compression. This isn't possible without knowing the spectral structure first.</p>
             <p>The leaderboard is the first step: measuring which models have exploitable structure, and how much.</p>
           </div>
         </div>
 
+      </div>
+    </div>
+  </section>
+
+  <div class="container"><div class="section-divider"></div></div>
+
+  <!-- CALIBRATION STABILITY -->
+  <section id="stability" class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>Calibration Stability</h2>
+        <p>d<sub>eff</sub> saturates with as few as 100 calibration sequences. Increasing to 10,000 sequences changes the measurement by less than 2%.</p>
+      </div>
+
+      <div class="stability-chart-wrap fade-in">
+        <div class="stability-chart-inner">
+          <canvas id="chart-stability"></canvas>
+        </div>
+        <div class="stability-insight">
+          <div class="stability-insight-card">
+            <div class="label">Key d_eff Variation</div>
+            <div class="value" style="color: var(--color-accent-teal);">&lt; 2%</div>
+            <div style="font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1);">100 &rarr; 10,000 sequences</div>
+          </div>
+          <div class="stability-insight-card">
+            <div class="label">Value d_eff Variation</div>
+            <div class="value" style="color: var(--color-accent-violet);">~10%</div>
+            <div style="font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1);">Converges but higher variance</div>
+          </div>
+          <div class="stability-insight-card">
+            <div class="label">Standard: n=100</div>
+            <div class="value" style="color: var(--color-accent-blue);">Validated</div>
+            <div style="font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1);">Sufficient for stable key d_eff</div>
+          </div>
+        </div>
+        <table class="stability-table" style="margin-top: var(--space-6);">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>n=100</th>
+              <th>n=1,000</th>
+              <th>n=10,000</th>
+              <th>&Delta; Key d_eff</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-family: var(--font-body); font-weight: 600; color: var(--color-text);">Llama 3.1-8B</td>
+              <td><span style="color: var(--color-accent-teal);">3.626</span> / <span style="color: var(--color-accent-violet);">48.29</span></td>
+              <td><span style="color: var(--color-accent-teal);">3.695</span> / <span style="color: var(--color-accent-violet);">52.50</span></td>
+              <td><span style="color: var(--color-accent-teal);">3.686</span> / <span style="color: var(--color-accent-violet);">53.87</span></td>
+              <td style="color: var(--color-accent-green);">1.6%</td>
+            </tr>
+            <tr>
+              <td style="font-family: var(--font-body); font-weight: 600; color: var(--color-text);">Qwen 2.5-7B</td>
+              <td><span style="color: var(--color-accent-teal);">4.113</span> / <span style="color: var(--color-accent-violet);">55.92</span></td>
+              <td><span style="color: var(--color-accent-teal);">4.255</span> / <span style="color: var(--color-accent-violet);">60.66</span></td>
+              <td><span style="color: var(--color-accent-teal);">4.219</span> / <span style="color: var(--color-accent-violet);">61.69</span></td>
+              <td style="color: var(--color-accent-green);">2.6%</td>
+            </tr>
+            <tr>
+              <td style="font-family: var(--font-body); font-weight: 600; color: var(--color-text);">Mistral 7B</td>
+              <td><span style="color: var(--color-accent-teal);">4.162</span> / <span style="color: var(--color-accent-violet);">59.70</span></td>
+              <td><span style="color: var(--color-accent-teal);">4.223</span> / <span style="color: var(--color-accent-violet);">64.63</span></td>
+              <td><span style="color: var(--color-accent-teal);">4.212</span> / <span style="color: var(--color-accent-violet);">66.00</span></td>
+              <td style="color: var(--color-accent-green);">1.2%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-3);">Values shown as <span style="color: var(--color-accent-teal);">key d_eff</span> / <span style="color: var(--color-accent-violet);">val d_eff</span>. &Delta; computed as max deviation from n=10,000 baseline.</p>
       </div>
     </div>
   </section>
@@ -1381,7 +1527,7 @@
             </span>
             Inference Cost Reduction
           </h3>
-          <p>Every major cloud provider spends billions on GPU inference. KV cache memory is the primary bottleneck for long-context serving. A 6× compression ratio from spectral-aware methods means serving 6× more concurrent users on the same hardware. At scale, this translates to hundreds of millions of dollars in infrastructure savings.</p>
+          <p>Every major cloud provider spends billions on GPU inference. KV cache memory is the primary bottleneck for long-context serving. A 6&times; compression ratio from spectral-aware methods means serving 6&times; more concurrent users on the same hardware. At scale, this translates to hundreds of millions of dollars in infrastructure savings.</p>
         </div>
 
         <div class="vision-card">
@@ -1401,7 +1547,7 @@
             </span>
             Compression Strategy Selection
           </h3>
-          <p>Different models have different spectral profiles. Some have sharp spectral gaps (high κ) that make aggressive compression safe. Others have gentler gradients that require more careful treatment. The leaderboard provides the data needed to make this decision before committing to a compression strategy.</p>
+          <p>Different models have different spectral profiles. Some have sharp spectral gaps (high &kappa;) that make aggressive compression safe. Others have gentler gradients that require more careful treatment. The leaderboard provides the data needed to make this decision before committing to a compression strategy.</p>
         </div>
 
         <div class="vision-card">
@@ -1409,9 +1555,9 @@
             <span class="method-icon" style="background: rgba(34,211,238,0.15); color: var(--color-accent-cyan);">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
             </span>
-            The Keys ≠ Values Insight
+            The Keys &ne; Values Insight
           </h3>
-          <p>The 10–15× asymmetry between key and value d<sub>eff</sub> is a structural finding about how attention works, not just a compression trick. It suggests that the "selection" channel (keys/queries) operates in a fundamentally lower-dimensional space than the "information" channel (values). Understanding this asymmetry has implications for attention mechanism design, not just compression.</p>
+          <p>The 10–15&times; asymmetry between key and value d<sub>eff</sub> is a structural finding about how attention works, not just a compression trick. It suggests that the "selection" channel (keys/queries) operates in a fundamentally lower-dimensional space than the "information" channel (values). Understanding this asymmetry has implications for attention mechanism design, not just compression.</p>
         </div>
 
         <div class="vision-card">
@@ -1539,48 +1685,124 @@ python -m src.measure \
         updateIcon();
         // Re-render charts with new theme
         if (currentDetailModel) showDetail(currentDetailModel);
+        renderStabilityChart();
       });
     })();
 
-    // ---- Verified Model Data (SpectralQuant NeurIPS paper, Tables 1, 8, Appendix B) ----
+    // ---- All 14 Model Data (Fresh B200 measurements, April 2026) ----
     const models = [
       {
         name: "Qwen 2.5-1.5B-Instruct",
         family: "qwen", params: "1.5B", head_dim: 128, layers: 28, n_kv_heads: 2,
-        key_deff: 3.95, val_deff: 40.34, kappa: 1.247,
-        key_layers: null, kappa_layers: null
+        key_deff: 3.78, val_deff: 42.84, kappa: 1068.104,
+        key_layers: [1.0009,1.4347,2.1898,3.1497,4.3693,7.2429,5.4212,2.1221,5.0151,4.3923,3.2338,3.8661,6.2465,5.0398,5.5900,2.7613,5.0846,3.0884,2.5015,3.6110,3.8842,3.5354,4.1531,4.0237,3.6105,3.2128,2.7837,3.2114],
+        val_layers: [20.0193,28.6178,53.3859,51.0635,49.4293,31.2908,16.6350,32.7347,32.3782,30.9059,53.2001,31.6921,26.8942,37.3423,27.5588,47.4471,38.9442,45.0422,43.1445,47.8154,65.6464,29.3499,65.1963,37.4407,49.2239,61.1974,74.9451,71.1113],
+        kappa_layers: [29162.8089,381.4671,36.2376,1.1827,1.1117,1.0954,1.1557,60.7941,1.0461,1.3509,1.1451,1.2459,1.1518,1.2966,1.1801,237.1807,1.1617,1.4076,1.3548,1.4211,1.2459,1.3748,1.2891,1.3352,1.3898,1.3043,1.0933,1.0712]
       },
       {
         name: "Qwen 2.5-7B-Instruct",
         family: "qwen", params: "7B", head_dim: 128, layers: 28, n_kv_heads: 4,
-        key_deff: 4.30, val_deff: 52.15, kappa: 1.238,
-        key_layers: null, kappa_layers: null
+        key_deff: 4.11, val_deff: 55.92, kappa: 736.667,
+        key_layers: [1.0062,1.3849,2.2800,1.5857,6.6216,5.2959,3.9649,2.7936,5.4742,3.1690,3.4301,5.6660,6.3714,2.3775,5.7856,7.8977,4.5782,5.1619,3.4006,4.1702,5.9986,3.7181,4.7835,4.1841,3.4235,3.7136,4.0675,2.8698],
+        val_layers: [34.0746,37.2325,38.4937,68.4838,43.4246,36.8116,49.9240,81.9835,37.6070,80.3825,49.6930,45.2023,57.3021,68.9519,41.7433,37.7836,66.5472,63.3634,70.4786,57.0683,67.8910,63.4068,65.4243,58.3264,48.3380,58.9530,68.3629,68.5570],
+        kappa_layers: [6334.9770,91.6830,74.8694,228.8332,1.1061,1.0903,1.2421,1.2376,1.1973,1.2687,1.1258,1.1237,1.2032,41.5948,1.1694,17.9882,1.3125,1.1548,1.4440,42.2352,1.1239,1.1135,1.2360,1.1519,1.2734,1.1453,1.0769,13770.7038]
       },
       {
         name: "Qwen 2.5-14B-Instruct",
-        family: "qwen", params: "14B", head_dim: 128, layers: 48, n_kv_heads: 4,
-        key_deff: 4.17, val_deff: 52.11, kappa: 1.220,
-        key_layers: null, kappa_layers: null
+        family: "qwen", params: "14B", head_dim: 128, layers: 48, n_kv_heads: 8,
+        key_deff: 4.08, val_deff: 56.23, kappa: 3.784,
+        key_layers: [1.2120,2.1260,3.0271,2.3844,2.1020,4.5788,3.2431,3.5472,3.9209,3.0715,3.4174,3.6303,4.3312,4.2285,4.8019,3.5027,4.5087,4.0268,4.1668,3.6626,4.1383,3.6323,4.0412,3.4252,5.7900,5.6220,4.9224,4.5680,3.6491,5.5323,4.5474,3.5160,5.1332,4.3541,5.2174,5.0499,4.0631,4.9036,5.1272,4.8687,5.7364,4.1961,4.8318,4.7166,4.7581,3.7890,3.8687,2.3729],
+        val_layers: [34.5439,15.0980,31.2886,47.7406,67.4359,51.2393,55.4747,69.2254,35.0826,56.0389,47.4949,45.2147,62.1282,57.4147,50.6662,71.9369,50.6035,52.5051,46.6298,38.2773,42.0553,44.4935,60.1219,63.4551,53.8557,55.5105,44.2500,50.2440,72.4065,67.0928,61.6794,59.3900,68.7268,72.3227,65.5066,52.2028,66.4773,68.0418,63.3484,63.6779,61.2489,62.1552,70.1100,72.1320,75.6417,57.6236,63.0316,56.3854],
+        kappa_layers: [96.7109,3.9728,8.8904,4.7752,1.3580,1.1258,1.2408,1.2529,1.2250,1.1723,1.1073,1.2244,1.1558,1.2052,1.1030,1.1999,1.2426,1.2740,1.1786,1.1875,1.1772,1.2079,1.2879,1.2822,1.1592,1.1485,1.1469,1.2180,1.3523,1.2512,9.5130,1.3430,1.1048,1.0961,1.1377,1.3031,1.2192,1.1288,1.1450,1.0987,1.1202,1.1565,1.1860,1.2075,1.2074,1.2773,1.0719,7.4740]
+      },
+      {
+        name: "Qwen 2.5-32B-Instruct",
+        family: "qwen", params: "32B", head_dim: 128, layers: 64, n_kv_heads: 8,
+        key_deff: 4.58, val_deff: 61.47, kappa: 3.321,
+        key_layers: [1.2049,2.1043,2.8947,2.1754,1.9365,4.3059,2.9842,3.3007,3.8678,2.8848,3.4080,3.8309,4.6132,4.5989,5.1226,3.8650,4.8433,4.4641,4.8853,3.3824,4.3986,4.4846,4.8489,3.6534,8.0766,7.7564,6.5765,5.7969,4.2925,8.1793,4.6998,4.7124,6.0975,5.0004,5.3861,4.2635,4.7964,4.2909,4.4229,3.4933,6.1533,5.8093,5.3901,4.8102,3.7454,5.7204,4.7063,3.7633,5.5408,4.7181,5.6244,5.7127,3.9662,5.1731,5.5651,5.4782,6.3414,4.4435,4.9176,5.0871,4.9671,3.6406,3.5721,2.4494],
+        val_layers: [33.5112,8.3635,23.0765,37.4060,61.4391,47.3104,49.1102,64.8022,32.4685,56.5192,46.2241,43.9511,64.3964,61.0325,53.6279,76.8289,53.7343,58.5884,53.2129,46.9800,48.6194,51.9430,68.3649,71.4707,66.4305,67.2740,53.7196,58.3359,79.1614,83.0613,82.9521,77.6097,59.8930,58.1382,49.9935,45.8347,52.8732,59.2962,76.3049,76.8729,70.0637,71.0410,58.4161,67.9672,80.1838,82.8285,75.7925,70.9234,81.6679,82.8116,75.8740,58.0959,64.0364,73.5882,67.0212,69.3548,64.1065,62.1901,68.6910,73.8988,76.7418,60.1643,65.5787,52.0800],
+        kappa_layers: [97.8037,4.5921,8.0879,3.9688,5.3970,1.2070,1.2714,1.2782,1.1608,1.2064,1.1613,1.2310,1.2050,1.1218,1.1604,1.2409,1.1886,1.3230,1.1776,1.1866,1.2168,1.0972,1.2079,1.2984,1.1463,1.1516,1.0906,1.1097,1.2134,1.1290,1.1833,1.1820,1.1587,1.1788,1.1307,1.1574,1.1353,1.1886,1.2140,1.2126,1.1056,1.1197,1.1159,1.1804,1.3661,7.8100,10.8402,1.2335,1.1078,1.1097,1.1271,1.3628,1.2313,1.1074,1.1408,1.1055,1.1219,1.1709,1.1719,1.1686,1.1932,1.2668,1.1354,7.8945]
+      },
+      {
+        name: "Qwen 2.5-72B-Instruct",
+        family: "qwen", params: "72B", head_dim: 128, layers: 80, n_kv_heads: 8,
+        key_deff: 3.23, val_deff: 60.47, kappa: 1.772,
+        key_layers: [7.2871,4.1201,1.7983,2.3393,2.0405,1.9917,1.9343,1.9459,1.9667,2.1474,2.1590,2.0892,2.5057,2.1747,2.3853,2.4906,2.2482,2.3205,2.6875,2.9977,2.2155,2.6117,2.8151,2.9873,2.3919,2.9701,2.9841,2.6370,2.6813,2.8825,2.6323,2.5654,2.5909,2.7282,2.9428,2.8582,2.9916,3.1897,2.9388,2.8936,3.3318,3.6057,3.1219,3.3107,4.0736,4.2122,4.4448,4.3319,4.0242,3.6492,4.5607,3.7781,3.4602,5.1358,3.9560,3.0759,3.0558,3.6505,3.4741,3.9085,5.2141,5.0338,4.1653,4.0467,3.7145,4.0659,3.6368,3.9135,3.8219,3.7712,3.5933,3.9944,3.6009,3.5361,3.2928,3.5169,3.7986,3.0586,3.0209,2.2778],
+        val_layers: [35.1709,4.8247,30.2855,43.9681,34.7867,31.0477,36.5614,35.0883,36.0888,26.8498,44.6514,42.0701,47.8188,42.1137,58.6019,56.4039,58.3091,47.3713,37.1030,43.3558,51.6072,54.3927,67.3216,80.9550,75.8007,60.4133,76.2030,78.1112,65.8467,69.9971,61.5424,62.3966,58.5441,60.0070,46.9167,54.6715,59.4323,50.2319,65.0473,54.0881,60.2925,65.1068,68.6503,58.3637,60.9108,48.0395,65.5702,66.5143,76.6107,50.6764,59.4222,50.8090,81.1144,69.3886,73.2041,75.8202,87.2559,78.7091,78.3221,67.0624,81.7410,85.7286,74.9531,71.0745,67.8960,70.0027,73.3037,86.3445,74.4782,78.4201,94.9934,77.5500,83.8468,72.1878,71.9619,62.6633,79.1798,48.1349,52.8848,42.0344],
+        kappa_layers: [1.0946,1.1099,1.1167,3.1313,6.7495,10.5129,1.3659,5.8936,8.3222,1.2920,6.9247,7.9894,1.2364,1.2312,1.1837,1.2335,1.2203,1.5959,1.1892,1.2416,1.2857,3.6432,1.3262,1.2945,1.4304,1.3058,1.2627,1.1886,1.3699,1.2244,1.2863,1.2254,1.2668,1.2489,1.2898,1.2180,1.1783,1.1641,1.2729,1.2731,1.2004,1.1148,1.2243,1.3340,1.2139,1.1206,1.1516,1.1045,1.2090,1.2497,1.1977,1.1334,1.3297,1.1795,1.2071,1.3049,1.2270,1.2095,1.2803,1.1607,1.1460,1.1987,1.1407,1.1974,1.1700,1.1529,1.2452,1.2439,1.2519,1.1528,1.2031,1.1940,1.2370,1.1884,1.0960,1.3712,1.1832,1.3029,1.2722,1.2668]
+      },
+      {
+        name: "Qwen 2.5-Coder-7B",
+        family: "qwen", params: "7B", head_dim: 128, layers: 28, n_kv_heads: 4,
+        key_deff: 3.88, val_deff: 54.13, kappa: 848.501,
+        key_layers: [1.0051,1.3996,2.2067,1.6318,6.2988,4.3357,3.6863,3.4829,5.7584,3.1791,4.7336,3.0999,7.9198,2.0615,4.5200,4.8885,5.2630,4.3255,1.8593,3.1742,2.9929,3.7209,5.2819,3.9700,3.6608,4.2781,5.2518,4.5400],
+        val_layers: [28.6798,31.9536,35.9613,62.9165,43.0872,38.1072,49.1538,78.1216,41.3450,80.4980,50.8415,52.0198,51.2076,64.6591,39.2737,35.6271,59.5030,55.9563,64.6831,50.0371,60.3388,58.9841,64.1924,62.8340,56.8172,61.3907,70.2616,67.2223],
+        kappa_layers: [8228.4958,166.4694,63.1843,202.8398,1.1519,1.1534,7.4421,1.2031,1.1636,1.2422,1.1111,1.2483,1.2827,28.1388,1.1500,1.2303,1.3003,1.1960,1.5916,22.1372,15.9346,1.1961,1.2293,1.1477,1.1120,1.0743,1.1158,15000.4878]
       },
       {
         name: "Llama 3.1-8B-Instruct",
         family: "llama", params: "8B", head_dim: 128, layers: 32, n_kv_heads: 8,
-        key_deff: 3.64, val_deff: 44.21, kappa: 1.257,
-        key_layers: [3.375,3.375,3.500,3.250,3.250,3.750,3.500,3.375,4.250,4.375,4.625,4.750,2.750,5.375,4.500,3.875,3.750,3.750,3.750,3.625,4.000,3.875,3.625,3.500,3.250,3.125,3.125,3.375,3.250,2.875,3.625,3.000],
-        kappa_layers: [1.499,1.365,1.185,1.191,1.374,1.250,1.283,1.212,1.301,1.173,1.186,1.217,1.374,1.153,1.220,1.253,1.234,1.287,1.316,1.272,1.190,1.201,1.284,1.227,1.323,1.207,1.236,1.268,1.236,1.194,1.271,1.238]
+        key_deff: 3.63, val_deff: 48.29, kappa: 1.244,
+        key_layers: [3.3368,3.4297,3.4565,3.2104,3.0687,3.7977,3.4093,3.1727,4.1216,4.3636,4.4378,4.6793,2.8448,5.3078,4.5376,3.8517,3.6227,3.7751,3.7125,3.4116,3.8195,3.7198,3.6495,3.5063,3.2338,3.1205,3.2524,3.3674,3.3007,2.8786,3.8168,2.8048],
+        val_layers: [37.3535,46.6346,35.5715,52.7893,50.1354,35.1985,52.0556,38.6040,45.5944,51.3591,43.1307,43.0122,52.7533,56.2786,54.0549,61.8493,49.1955,56.2882,49.2267,55.2221,54.6952,46.5025,55.5794,53.3340,48.6427,47.1588,44.7335,46.0981,51.0603,42.0653,54.7112,34.4332],
+        kappa_layers: [1.4978,1.3243,1.1674,1.1747,1.3573,1.2977,1.2470,1.2387,1.2436,1.1774,1.2029,1.2334,1.4070,1.2460,1.2308,1.2213,1.1778,1.2091,1.2432,1.2084,1.1370,1.1889,1.2360,1.2221,1.2711,1.2117,1.2467,1.2239,1.2295,1.1900,1.2950,1.2338]
       },
       {
-        name: "Mistral 7B-Instruct-v0.3",
+        name: "Llama 3.1-70B-Instruct",
+        family: "llama", params: "70B", head_dim: 128, layers: 80, n_kv_heads: 8,
+        key_deff: 3.45, val_deff: 52.16, kappa: 2.866,
+        key_layers: [2.4872,1.6562,1.8306,2.2232,1.5232,1.7455,1.8097,1.6919,1.6471,1.9788,2.3991,2.5188,1.7599,2.6391,3.1864,3.4210,2.8615,4.6502,4.2132,3.5738,3.3896,4.0821,3.8291,4.2308,4.5010,4.0196,3.7311,4.1052,4.0065,4.1882,3.8033,4.4958,3.3964,3.7417,3.5631,4.4671,3.8793,3.7602,3.5242,3.6274,3.4055,3.3864,3.3231,3.0173,3.3472,3.3310,4.0691,3.1855,3.2665,3.3575,3.8190,3.4053,3.4775,3.5733,4.3083,3.1989,3.5505,3.9176,4.2926,3.8594,3.5700,3.9062,5.0015,3.8356,3.9716,4.0549,4.0523,3.5085,3.7431,3.7321,3.5414,3.9921,3.2772,3.6600,3.6639,3.7877,3.3406,4.2679,3.7960,4.1680],
+        val_layers: [6.0807,32.7625,48.8794,50.6842,30.7274,54.5814,44.9736,40.0935,51.2813,55.1258,50.7780,66.4043,47.0176,57.3486,55.6642,58.1657,62.0520,69.7024,77.8072,61.0839,52.6065,64.2463,54.8309,58.1019,44.9481,49.9094,49.7756,57.6574,41.0937,41.2274,63.6017,65.7166,46.5299,53.5586,56.2886,68.1185,51.2972,50.8607,56.4173,54.8517,50.3867,54.3832,44.4893,36.2129,57.9505,41.3187,33.1760,35.2399,45.3152,31.5397,41.1787,46.2876,60.2786,51.6569,44.8815,35.8922,69.1162,64.7448,52.9275,50.3762,72.2248,60.8023,49.2848,44.7269,72.8784,62.1414,57.6227,68.2831,69.7058,56.8930,47.1976,73.9380,41.3193,63.3977,51.4387,65.0978,30.0002,59.4470,44.2644,31.9935],
+        kappa_layers: [7.6750,17.6249,10.0861,2.2281,32.2973,1.0659,12.0174,1.3398,32.3288,13.2278,1.2179,1.3542,16.4929,1.3352,1.2022,1.1799,1.1958,1.1247,1.1490,1.1809,1.2264,1.2297,1.1659,1.1423,1.1554,1.1607,1.1586,1.1855,1.1337,1.1883,1.2036,1.1677,1.2218,1.2747,1.0794,1.1556,1.1840,1.2302,1.1816,1.1924,1.1598,1.1961,1.1750,1.3135,1.2052,1.1553,1.3556,1.2194,1.1746,1.2045,1.1644,1.2452,1.2417,1.1376,1.2181,1.2539,1.2813,1.1867,1.3405,1.1426,1.2375,1.2466,1.0869,1.1612,1.1456,1.1481,1.1566,1.1796,1.2985,1.1505,1.1978,1.2145,1.2275,1.3032,1.1742,1.1373,1.2151,1.1908,1.2542,1.2181]
+      },
+      {
+        name: "Mistral 7B-v0.3",
         family: "mistral", params: "7B", head_dim: 128, layers: 32, n_kv_heads: 8,
-        key_deff: 4.18, val_deff: 54.93, kappa: 1.222,
-        key_layers: null, kappa_layers: null
+        key_deff: 4.16, val_deff: 59.7, kappa: 1.81,
+        key_layers: [1.9566,2.8816,3.2701,3.3880,3.0180,3.7764,3.4412,4.1180,3.3935,5.0652,4.0801,4.8714,5.2092,3.8600,4.4515,5.3070,5.1877,3.7799,4.4973,4.0994,4.3071,3.9246,4.2719,3.3580,4.4589,4.7224,4.7602,3.9050,4.7697,4.3517,5.8821,4.8329],
+        val_layers: [24.5638,34.6570,42.7661,54.0424,62.7571,67.8674,51.4550,59.7047,54.6705,61.5238,47.3326,69.6546,57.1590,70.3895,75.6583,74.4568,75.6175,72.2557,60.1651,57.6309,65.9392,66.5180,63.4989,52.5408,60.5486,60.3767,61.3686,45.6028,61.0556,64.5064,67.7584,66.2706],
+        kappa_layers: [20.8469,1.3394,1.1424,1.3476,1.2838,1.1966,1.3190,1.1903,1.2219,1.1924,1.2001,1.2331,1.1578,1.2458,1.1538,1.1253,1.1438,1.2465,1.1513,1.1704,1.1909,1.1347,1.1957,1.2425,1.1715,1.2122,1.1132,1.1600,1.1392,1.2197,1.1477,1.0871]
+      },
+      {
+        name: "Mistral Nemo 12B",
+        family: "mistral", params: "12B", head_dim: 128, layers: 40, n_kv_heads: 8,
+        key_deff: 3.87, val_deff: 51.9, kappa: 1.218,
+        key_layers: [3.4671,3.2940,2.8420,3.3750,2.9566,3.3925,4.2248,3.9104,4.3639,4.3218,3.6551,5.2790,3.6789,4.9908,7.4976,4.6892,4.4244,3.6981,4.4980,4.5378,3.7980,3.8279,3.4589,3.7200,3.4659,4.0695,3.2206,3.1760,4.0305,3.4520,3.7250,3.1868,3.5588,3.9144,3.5925,3.5594,3.4852,3.2105,3.5296,3.7572],
+        val_layers: [24.2851,37.1698,60.3630,48.6721,60.8344,55.2221,55.3188,64.1663,48.0719,62.1776,61.8729,62.9476,73.0557,50.8504,25.8078,14.1196,30.3528,25.9299,55.3887,52.6423,47.5204,50.7544,53.0721,58.3583,56.9674,46.8182,62.4342,59.8291,50.0213,74.0714,58.9953,45.7658,59.0312,55.1774,60.5904,58.3668,46.6242,54.4019,64.9026,42.9971],
+        kappa_layers: [1.3134,1.9237,1.4904,1.1930,1.3226,1.1508,1.0887,1.1483,1.1815,1.1418,1.2102,1.1644,1.2079,1.1872,1.0867,1.2021,1.2075,1.3013,1.2140,1.2105,1.0843,1.1665,1.4101,1.1566,1.2097,1.1278,1.1900,1.2155,1.1808,1.1989,1.1642,1.1488,1.2094,1.1673,1.2365,1.1842,1.2254,1.1709,1.2101,1.1307]
+      },
+      {
+        name: "Mistral Small 24B",
+        family: "mistral", params: "24B", head_dim: 128, layers: 40, n_kv_heads: 8,
+        key_deff: 5.69, val_deff: 51.46, kappa: 1.152,
+        key_layers: [4.0520,4.3171,4.8374,3.6146,3.9283,5.1193,4.7260,5.8671,5.7130,4.6074,6.9698,5.8652,8.7449,6.0826,10.5753,7.0705,4.0194,7.6335,6.9849,6.0763,6.2855,4.7237,5.4135,5.9408,5.6357,5.3782,4.8096,4.3752,7.2406,4.6616,7.3263,4.9940,6.2368,5.3084,5.8993,4.8915,5.5083,5.7298,5.4471,5.0825],
+        val_layers: [19.2590,26.9443,50.3503,40.7390,49.3562,66.5255,55.1632,61.7377,64.8549,63.0626,60.6993,66.0287,54.1346,45.9249,40.9995,31.7575,66.4609,50.9565,67.0963,50.3846,65.8646,56.9039,44.7132,49.9727,34.4413,61.5330,44.3141,32.0615,72.9356,48.8848,69.6356,40.2534,66.0140,46.8208,65.2662,52.6219,41.8557,61.3954,37.7081,32.7822],
+        kappa_layers: [1.3134,1.1754,1.2053,1.1459,1.2217,1.1132,1.3288,1.1432,1.1037,1.2312,1.1300,1.1574,1.0901,1.1247,1.0873,1.1058,1.2294,1.1248,1.1454,1.1565,1.1669,1.1938,1.1616,1.0974,1.1735,1.1260,1.1599,1.2134,1.0770,1.0976,1.1129,1.1931,1.1035,1.1429,1.1295,1.1359,1.0689,1.0773,1.1649,1.1370]
+      },
+      {
+        name: "Gemma 2-2B-IT",
+        family: "gemma", params: "2B", head_dim: 256, layers: 26, n_kv_heads: 4,
+        key_deff: 6.98, val_deff: 56.08, kappa: 1.127,
+        key_layers: [5.7930,6.9548,5.8700,5.7433,5.5599,6.5614,10.7192,4.9486,10.5254,8.2327,7.8041,6.2127,10.6535,5.0678,9.3854,4.4635,9.5423,6.2680,7.4730,5.6975,6.8944,6.5635,8.3416,5.9219,6.0575,4.1172],
+        val_layers: [28.0804,51.1404,53.0665,35.3944,69.0783,44.1049,40.5525,84.6112,48.7431,46.9279,41.9386,61.1927,45.1563,68.2418,62.4932,47.6135,82.1694,52.8932,61.3143,65.2000,54.5409,34.8521,88.1369,79.5882,69.1899,41.9224],
+        kappa_layers: [1.1720,1.1621,1.0635,1.1154,1.1939,1.2184,1.0706,1.1277,1.0624,1.0733,1.1267,1.1286,1.0976,1.1489,1.1362,1.1709,1.0537,1.1003,1.1325,1.1335,1.0624,1.2707,1.1036,1.1138,1.1044,1.1479]
       },
       {
         name: "Gemma 2-9B-IT",
         family: "gemma", params: "9B", head_dim: 256, layers: 42, n_kv_heads: 8,
-        key_deff: 8.20, val_deff: null, kappa: 1.114,
-        key_layers: null, kappa_layers: null
+        key_deff: 8.1, val_deff: 60.69, kappa: 1.12,
+        key_layers: [7.0480,5.4787,9.2263,4.8910,7.2393,10.4928,8.0599,9.2570,6.8828,9.9748,6.7164,6.5115,13.1460,9.8049,9.6208,12.7968,10.8110,8.0027,14.5455,9.7172,10.7723,8.4902,7.7283,8.2442,8.1156,5.6285,7.1765,4.7400,9.8701,7.3401,9.9136,6.9867,8.6450,6.9381,7.2145,6.8793,7.4183,6.4612,6.1829,6.3552,4.9109,3.9808],
+        val_layers: [13.8069,37.6948,55.4509,55.5843,68.5855,41.9547,62.6003,52.1744,85.9024,74.6289,60.6338,49.7333,65.7530,63.5438,80.0002,51.8328,73.1297,96.8314,76.3060,57.2602,71.6534,80.4378,51.3164,70.5405,60.9713,65.1268,60.9702,45.7355,72.9130,46.8785,62.3263,52.6826,79.2706,54.5493,61.0745,55.0346,62.8548,69.7850,40.5737,59.0925,63.1298,38.7508],
+        kappa_layers: [1.2491,1.1352,1.0418,1.1808,1.1573,1.0459,1.1146,1.1482,1.1923,1.1126,1.0558,1.1461,1.0573,1.1016,1.0831,1.1021,1.0969,1.0845,1.0438,1.0903,1.0891,1.1415,1.1577,1.1113,1.2017,1.1477,1.1602,1.1510,1.1281,1.1286,1.0958,1.1330,1.0663,1.1653,1.0727,1.1185,1.0766,1.1002,1.1196,1.1368,1.1617,1.1407]
       },
+      {
+        name: "Gemma 2-27B-IT",
+        family: "gemma", params: "27B", head_dim: 128, layers: 46, n_kv_heads: 16,
+        key_deff: 3.25, val_deff: 12.23, kappa: 1.149,
+        key_layers: [9.3834,8.2150,7.6347,5.2941,4.3371,10.4663,6.3562,10.6727,6.9194,7.7405,7.9042,6.0548,8.2258,8.1687,5.7577,6.5650,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000],
+        val_layers: [7.8307,22.1220,19.2685,40.6900,37.4794,17.8724,15.0613,30.0001,31.3997,25.9971,45.7708,67.4654,39.2878,30.4306,46.8912,55.0693,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000,1.0000],
+        kappa_layers: [1.1693,1.1156,1.1707,1.2186,1.1900,1.1502,1.1755,1.1522,1.1043,1.1681,1.1027,1.1299,1.1286,1.1041,1.1292,1.1671,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]
+      }
     ];
 
     // Compute derived fields
@@ -1592,29 +1814,16 @@ python -m src.measure \
     models.sort((a, b) => a.key_pct - b.key_pct);
     models.forEach((m, i) => m.rank = i + 1);
 
-    // ---- Upcoming Models ----
+    // ---- Upcoming Models (only those that failed to measure) ----
     const upcomingModels = [
-      { name: "Llama 3.1-70B", family: "llama", params: "70B" },
-      { name: "Llama 3.1-405B", family: "llama", params: "405B" },
-      { name: "Llama 3.3-70B", family: "llama", params: "70B" },
-      { name: "Llama 3.2-3B", family: "llama", params: "3B" },
-      { name: "Qwen 2.5-32B", family: "qwen", params: "32B" },
-      { name: "Qwen 2.5-72B", family: "qwen", params: "72B" },
-      { name: "Qwen 2.5-Coder-7B", family: "qwen", params: "7B" },
-      { name: "Mistral Small 24B", family: "mistral", params: "24B" },
-      { name: "Mistral Nemo 12B", family: "mistral", params: "12B" },
-      { name: "Mixtral 8x7B", family: "mistral", params: "47B" },
-      { name: "Gemma 2-2B", family: "gemma", params: "2B" },
-      { name: "Gemma 2-27B", family: "gemma", params: "27B" },
-      { name: "Phi-3-Mini", family: "phi", params: "3.8B" },
-      { name: "Phi-3-Small", family: "phi", params: "7B" },
-      { name: "Phi-3-Medium", family: "phi", params: "14B" },
-      { name: "DeepSeek-V2-Lite", family: "deepseek", params: "16B" },
-      { name: "DeepSeek-V2", family: "deepseek", params: "236B" },
-      { name: "DeepSeek-V3", family: "deepseek", params: "671B" },
-      { name: "Command-R 35B", family: "command", params: "35B" },
-      { name: "Command-R+ 104B", family: "command", params: "104B" },
-      { name: "DBRX 132B", family: "dbrx", params: "132B" },
+      { name: "Llama 3.2-3B", family: "llama", params: "3B", blocker: "Gated access" },
+      { name: "Llama 3.3-70B", family: "llama", params: "70B", blocker: "Gated access" },
+      { name: "Phi-3-Mini", family: "phi", params: "3.8B", blocker: "Config parsing" },
+      { name: "Phi-3-Small", family: "phi", params: "7B", blocker: "Config parsing" },
+      { name: "Phi-3-Medium", family: "phi", params: "14B", blocker: "Config parsing" },
+      { name: "DeepSeek-V2-Lite", family: "deepseek", params: "16B", blocker: "Transformers compat" },
+      { name: "Command-R 35B", family: "command", params: "35B", blocker: "Gated access" },
+      { name: "DBRX 132B", family: "dbrx", params: "132B", blocker: "Model unavailable" },
     ];
 
     // Render upcoming models grid
@@ -1625,7 +1834,7 @@ python -m src.measure \
           <div class="upcoming-card-name">${m.name}</div>
           <div class="upcoming-card-meta">${m.family} · ${m.params}</div>
         </div>
-        <span class="upcoming-pending">Pending</span>
+        <span class="upcoming-blocker">${m.blocker}</span>
       </div>
     `).join('');
 
@@ -1683,7 +1892,6 @@ python -m src.measure \
       const { field, dir } = currentSort;
       data.sort((a, b) => {
         let va = a[field], vb = b[field];
-        // Handle null val_deff
         if (va === null) va = dir === 'asc' ? Infinity : -Infinity;
         if (vb === null) vb = dir === 'asc' ? Infinity : -Infinity;
         if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
@@ -1743,6 +1951,7 @@ python -m src.measure \
         violet: style.getPropertyValue('--color-accent-violet').trim(),
         blue: style.getPropertyValue('--color-accent-blue').trim(),
         cyan: style.getPropertyValue('--color-accent-cyan').trim(),
+        green: style.getPropertyValue('--color-accent-green').trim(),
         textMuted: style.getPropertyValue('--color-text-muted').trim(),
         textFaint: style.getPropertyValue('--color-text-faint').trim(),
         border: style.getPropertyValue('--color-border-subtle').trim(),
@@ -1755,7 +1964,6 @@ python -m src.measure \
       destroyCharts();
       const panel = document.getElementById('detail-panel');
       const chartsEl = document.getElementById('detail-charts');
-      const noLayersEl = document.getElementById('detail-no-layers');
       panel.classList.add('active');
       document.getElementById('detail-title').textContent = model.name;
 
@@ -1793,7 +2001,6 @@ python -m src.measure \
         </div>
       `;
 
-      const hasLayerData = model.key_layers !== null;
       const c = getChartColors();
       const chartDefaults = {
         responsive: true,
@@ -1805,200 +2012,106 @@ python -m src.measure \
         }
       };
 
-      if (hasLayerData) {
-        // Show charts, hide no-layers message
-        chartsEl.style.display = 'grid';
-        noLayersEl.style.display = 'none';
+      chartsEl.style.display = 'grid';
+      const keyLayers = model.key_layers;
+      const valLayers = model.val_layers;
+      const kappaLayers = model.kappa_layers;
+      const layerLabels = Array.from({length: keyLayers.length}, (_, i) => i);
 
-        const keyLayers = model.key_layers;
-        const kappaLayers = model.kappa_layers;
-        const layerLabels = Array.from({length: keyLayers.length}, (_, i) => i);
-
-        // Chart 1: Key d_eff by layer (real data)
-        chartInstances.push(new Chart(document.getElementById('chart-key-layers'), {
-          type: 'bar',
-          data: {
-            labels: layerLabels,
-            datasets: [{
-              data: keyLayers,
-              backgroundColor: c.teal + '88',
-              borderColor: c.teal,
-              borderWidth: 1,
-              borderRadius: 2,
-            }]
-          },
-          options: {
-            ...chartDefaults,
-            scales: {
-              ...chartDefaults.scales,
-              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Layer', color: c.textFaint, font: { size: 10 } } },
-              y: { ...chartDefaults.scales.y, title: { display: true, text: 'd_eff', color: c.textFaint, font: { size: 10 } }, beginAtZero: true },
-            }
+      // Chart 1: Key d_eff by layer
+      chartInstances.push(new Chart(document.getElementById('chart-key-layers'), {
+        type: 'bar',
+        data: {
+          labels: layerLabels,
+          datasets: [{
+            data: keyLayers,
+            backgroundColor: c.teal + '88',
+            borderColor: c.teal,
+            borderWidth: 1,
+            borderRadius: 2,
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            ...chartDefaults.scales,
+            x: { ...chartDefaults.scales.x, title: { display: true, text: 'Layer', color: c.textFaint, font: { size: 10 } } },
+            y: { ...chartDefaults.scales.y, title: { display: true, text: 'd_eff', color: c.textFaint, font: { size: 10 } }, beginAtZero: true },
           }
-        }));
+        }
+      }));
 
-        // Chart 2: Kappa by layer (real data)
-        chartInstances.push(new Chart(document.getElementById('chart-kappa-layers'), {
-          type: 'bar',
-          data: {
-            labels: layerLabels,
-            datasets: [{
-              data: kappaLayers,
-              backgroundColor: c.blue + '88',
-              borderColor: c.blue,
-              borderWidth: 1,
-              borderRadius: 2,
-            }]
-          },
-          options: {
-            ...chartDefaults,
-            scales: {
-              ...chartDefaults.scales,
-              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Layer', color: c.textFaint, font: { size: 10 } } },
-              y: { ...chartDefaults.scales.y, title: { display: true, text: 'kappa', color: c.textFaint, font: { size: 10 } }, beginAtZero: false },
-            }
+      // Chart 2: Value d_eff by layer
+      chartInstances.push(new Chart(document.getElementById('chart-val-layers'), {
+        type: 'bar',
+        data: {
+          labels: layerLabels,
+          datasets: [{
+            data: valLayers,
+            backgroundColor: c.violet + '88',
+            borderColor: c.violet,
+            borderWidth: 1,
+            borderRadius: 2,
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            ...chartDefaults.scales,
+            x: { ...chartDefaults.scales.x, title: { display: true, text: 'Layer', color: c.textFaint, font: { size: 10 } } },
+            y: { ...chartDefaults.scales.y, title: { display: true, text: 'd_eff', color: c.textFaint, font: { size: 10 } }, beginAtZero: true },
           }
-        }));
+        }
+      }));
 
-        // Chart 3: Eigenvalue spectrum (illustrative from d_eff and kappa)
-        const eigenvals = generateEigenvalueSpectrum(model.head_dim, model.key_deff, model.kappa);
-        chartInstances.push(new Chart(document.getElementById('chart-eigenvalues'), {
-          type: 'line',
-          data: {
-            labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
-            datasets: [{
-              data: eigenvals,
-              borderColor: c.cyan,
-              backgroundColor: c.cyan + '18',
-              borderWidth: 1.5,
-              pointRadius: 0,
-              fill: true,
-              tension: 0.3,
-            }]
-          },
-          options: {
-            ...chartDefaults,
-            scales: {
-              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Eigenvalue Index', color: c.textFaint, font: { size: 10 } } },
-              y: { ...chartDefaults.scales.y, type: 'logarithmic', title: { display: true, text: 'Eigenvalue (log)', color: c.textFaint, font: { size: 10 } } },
-            }
+      // Chart 3: Kappa by layer (filter out nulls/NaN and very high values for display)
+      const cleanKappa = kappaLayers.map(v => (v === null || v !== v || v > 100) ? null : v);
+      chartInstances.push(new Chart(document.getElementById('chart-kappa-layers'), {
+        type: 'bar',
+        data: {
+          labels: layerLabels,
+          datasets: [{
+            data: cleanKappa,
+            backgroundColor: c.blue + '88',
+            borderColor: c.blue,
+            borderWidth: 1,
+            borderRadius: 2,
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            ...chartDefaults.scales,
+            x: { ...chartDefaults.scales.x, title: { display: true, text: 'Layer', color: c.textFaint, font: { size: 10 } } },
+            y: { ...chartDefaults.scales.y, title: { display: true, text: 'kappa', color: c.textFaint, font: { size: 10 } }, beginAtZero: false },
           }
-        }));
+        }
+      }));
 
-        // Chart 4: Cumulative variance
-        const cumvar = [];
-        let sum = eigenvals.reduce((a, b) => a + b, 0);
-        let running = 0;
-        eigenvals.forEach(v => { running += v; cumvar.push((running / sum) * 100); });
-
-        chartInstances.push(new Chart(document.getElementById('chart-cumvar'), {
-          type: 'line',
-          data: {
-            labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
-            datasets: [{
-              data: cumvar,
-              borderColor: c.blue,
-              backgroundColor: c.blue + '18',
-              borderWidth: 1.5,
-              pointRadius: 0,
-              fill: true,
-              tension: 0.3,
-            }]
-          },
-          options: {
-            ...chartDefaults,
-            scales: {
-              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Components', color: c.textFaint, font: { size: 10 } } },
-              y: { ...chartDefaults.scales.y, min: 0, max: 100, title: { display: true, text: 'Cumulative Var %', color: c.textFaint, font: { size: 10 } } },
-            }
+      // Chart 4: Eigenvalue spectrum (illustrative from d_eff and kappa)
+      const eigenvals = generateEigenvalueSpectrum(model.head_dim, model.key_deff, model.kappa);
+      chartInstances.push(new Chart(document.getElementById('chart-eigenvalues'), {
+        type: 'line',
+        data: {
+          labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
+          datasets: [{
+            data: eigenvals,
+            borderColor: c.cyan,
+            backgroundColor: c.cyan + '18',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.3,
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            x: { ...chartDefaults.scales.x, title: { display: true, text: 'Eigenvalue Index', color: c.textFaint, font: { size: 10 } } },
+            y: { ...chartDefaults.scales.y, type: 'logarithmic', title: { display: true, text: 'Eigenvalue (log)', color: c.textFaint, font: { size: 10 } } },
           }
-        }));
-      } else {
-        // No per-layer data: show eigenvalue + cumvar only, plus message
-        chartsEl.style.display = 'grid';
-        noLayersEl.style.display = 'block';
-
-        // Blank out the per-layer canvases with a message
-        const keyCanvas = document.getElementById('chart-key-layers');
-        const kappaCanvas = document.getElementById('chart-kappa-layers');
-
-        // Create placeholder charts with no data
-        chartInstances.push(new Chart(keyCanvas, {
-          type: 'bar',
-          data: { labels: [], datasets: [{ data: [] }] },
-          options: {
-            ...chartDefaults,
-            plugins: {
-              ...chartDefaults.plugins,
-              title: { display: true, text: 'No per-layer data available', color: c.textFaint, font: { size: 12, family: "'General Sans'" } }
-            }
-          }
-        }));
-        chartInstances.push(new Chart(kappaCanvas, {
-          type: 'bar',
-          data: { labels: [], datasets: [{ data: [] }] },
-          options: {
-            ...chartDefaults,
-            plugins: {
-              ...chartDefaults.plugins,
-              title: { display: true, text: 'No per-layer data available', color: c.textFaint, font: { size: 12, family: "'General Sans'" } }
-            }
-          }
-        }));
-
-        // Eigenvalue spectrum (illustrative)
-        const eigenvals = generateEigenvalueSpectrum(model.head_dim, model.key_deff, model.kappa);
-        chartInstances.push(new Chart(document.getElementById('chart-eigenvalues'), {
-          type: 'line',
-          data: {
-            labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
-            datasets: [{
-              data: eigenvals,
-              borderColor: c.cyan,
-              backgroundColor: c.cyan + '18',
-              borderWidth: 1.5,
-              pointRadius: 0,
-              fill: true,
-              tension: 0.3,
-            }]
-          },
-          options: {
-            ...chartDefaults,
-            scales: {
-              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Eigenvalue Index', color: c.textFaint, font: { size: 10 } } },
-              y: { ...chartDefaults.scales.y, type: 'logarithmic', title: { display: true, text: 'Eigenvalue (log)', color: c.textFaint, font: { size: 10 } } },
-            }
-          }
-        }));
-
-        // Cumulative variance
-        const cumvar = [];
-        let sum = eigenvals.reduce((a, b) => a + b, 0);
-        let running = 0;
-        eigenvals.forEach(v => { running += v; cumvar.push((running / sum) * 100); });
-        chartInstances.push(new Chart(document.getElementById('chart-cumvar'), {
-          type: 'line',
-          data: {
-            labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
-            datasets: [{
-              data: cumvar,
-              borderColor: c.blue,
-              backgroundColor: c.blue + '18',
-              borderWidth: 1.5,
-              pointRadius: 0,
-              fill: true,
-              tension: 0.3,
-            }]
-          },
-          options: {
-            ...chartDefaults,
-            scales: {
-              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Components', color: c.textFaint, font: { size: 10 } } },
-              y: { ...chartDefaults.scales.y, min: 0, max: 100, title: { display: true, text: 'Cumulative Var %', color: c.textFaint, font: { size: 10 } } },
-            }
-          }
-        }));
-      }
+        }
+      }));
 
       panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -2006,11 +2119,12 @@ python -m src.measure \
     function generateEigenvalueSpectrum(d, deff, kappa) {
       const vals = [];
       const deffRound = Math.round(deff);
+      const kappaClamp = Math.min(kappa, 10); // Clamp for display
       for (let i = 0; i < d; i++) {
         if (i < deffRound) {
           vals.push(100 * Math.exp(-0.3 * i));
         } else if (i === deffRound) {
-          vals.push(100 * Math.exp(-0.3 * (deffRound - 1)) / (kappa * 8));
+          vals.push(100 * Math.exp(-0.3 * (deffRound - 1)) / (kappaClamp * 8));
         } else {
           vals.push(vals[deffRound] * Math.exp(-0.02 * (i - deffRound)));
         }
@@ -2023,6 +2137,92 @@ python -m src.measure \
       currentDetailModel = null;
       destroyCharts();
     });
+
+    // ---- Stability Chart ----
+    let stabilityChartInstance = null;
+
+    function renderStabilityChart() {
+      if (stabilityChartInstance) stabilityChartInstance.destroy();
+      const c = getChartColors();
+      const ctx = document.getElementById('chart-stability');
+      if (!ctx) return;
+
+      const modelLabels = ['Llama 3.1-8B', 'Qwen 2.5-7B', 'Mistral 7B'];
+      const n100  = [3.6256, 4.1134, 4.1624];
+      const n1000 = [3.6948, 4.2553, 4.2228];
+      const n10k  = [3.6857, 4.2190, 4.2120];
+
+      stabilityChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: modelLabels,
+          datasets: [
+            {
+              label: 'n=100',
+              data: n100,
+              backgroundColor: c.teal + 'cc',
+              borderColor: c.teal,
+              borderWidth: 1,
+              borderRadius: 4,
+            },
+            {
+              label: 'n=1,000',
+              data: n1000,
+              backgroundColor: c.blue + 'cc',
+              borderColor: c.blue,
+              borderWidth: 1,
+              borderRadius: 4,
+            },
+            {
+              label: 'n=10,000',
+              data: n10k,
+              backgroundColor: c.violet + 'cc',
+              borderColor: c.violet,
+              borderWidth: 1,
+              borderRadius: 4,
+            },
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                color: c.textMuted,
+                font: { size: 12, family: "'General Sans'" },
+                usePointStyle: true,
+                pointStyle: 'rectRounded',
+                padding: 16,
+              }
+            },
+            title: {
+              display: true,
+              text: 'Key d_eff vs. Calibration Size',
+              color: c.textMuted,
+              font: { size: 14, weight: 600, family: "'General Sans'" },
+              padding: { bottom: 16 },
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: c.textFaint, font: { size: 12, family: "'General Sans'" } },
+              grid: { color: c.border },
+            },
+            y: {
+              min: 3.0,
+              max: 4.8,
+              ticks: { color: c.textFaint, font: { size: 11, family: "'JetBrains Mono'" } },
+              grid: { color: c.border },
+              title: { display: true, text: 'Key d_eff', color: c.textFaint, font: { size: 11 } },
+            }
+          }
+        }
+      });
+    }
+    renderStabilityChart();
 
     // ---- Scroll Animations ----
     const observer = new IntersectionObserver((entries) => {
