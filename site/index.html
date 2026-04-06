@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Spectral Index — How many dimensions does your model actually use?</title>
+  <meta name="description" content="Measuring the effective dimensionality (d_eff) of KV cache representations across every major open model. A leaderboard for spectral structure in LLMs." />
+
+  <!-- Fonts -->
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --font-body: 'General Sans', 'Helvetica Neue', sans-serif;
+      --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+
+      /* Type scale */
+      --text-xs: clamp(0.6875rem, 0.65rem + 0.19vw, 0.8125rem);
+      --text-sm: clamp(0.8125rem, 0.75rem + 0.3vw, 0.9375rem);
+      --text-base: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+      --text-lg: clamp(1.0625rem, 0.95rem + 0.6vw, 1.375rem);
+      --text-xl: clamp(1.375rem, 1.1rem + 1.1vw, 2rem);
+      --text-2xl: clamp(1.75rem, 1rem + 2.4vw, 3rem);
+      --text-hero: clamp(2.25rem, 0.5rem + 5.5vw, 5rem);
+
+      /* Spacing */
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+      --space-20: 5rem;
+      --space-24: 6rem;
+
+      /* Radius */
+      --radius-sm: 0.25rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+
+      --transition-interactive: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      --content-wide: 1200px;
+    }
+
+    /* ============================================================
+       DARK THEME (Default — scientific / spectral aesthetic)
+       ============================================================ */
+    :root,
+    [data-theme='dark'] {
+      --color-bg: #0a0b10;
+      --color-surface: #11121a;
+      --color-surface-2: #171825;
+      --color-surface-3: #1e2033;
+      --color-border: #2a2d44;
+      --color-border-subtle: #1e2038;
+
+      --color-text: #e0e1e8;
+      --color-text-muted: #8b8ea3;
+      --color-text-faint: #5a5d76;
+
+      /* Spectral gradient accents */
+      --color-accent-violet: #8b5cf6;
+      --color-accent-blue: #3b82f6;
+      --color-accent-teal: #14b8a6;
+      --color-accent-cyan: #22d3ee;
+      --color-accent-green: #34d399;
+
+      /* Primary = teal */
+      --color-primary: #14b8a6;
+      --color-primary-hover: #0d9488;
+
+      /* Semantic */
+      --color-success: #34d399;
+      --color-warning: #fbbf24;
+      --color-error: #f87171;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.6);
+
+      /* Glow */
+      --glow-teal: 0 0 40px rgba(20, 184, 166, 0.15);
+      --glow-violet: 0 0 40px rgba(139, 92, 246, 0.1);
+    }
+
+    /* Light mode */
+    [data-theme='light'] {
+      --color-bg: #f4f4f8;
+      --color-surface: #ffffff;
+      --color-surface-2: #f8f8fc;
+      --color-surface-3: #eeeff5;
+      --color-border: #d4d5e0;
+      --color-border-subtle: #e4e5ed;
+
+      --color-text: #1a1b2e;
+      --color-text-muted: #5c5e7a;
+      --color-text-faint: #9496ad;
+
+      --color-accent-violet: #7c3aed;
+      --color-accent-blue: #2563eb;
+      --color-accent-teal: #0d9488;
+      --color-accent-cyan: #0891b2;
+      --color-accent-green: #059669;
+
+      --color-primary: #0d9488;
+      --color-primary-hover: #0f766e;
+
+      --color-success: #059669;
+      --color-warning: #d97706;
+      --color-error: #dc2626;
+
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+
+      --glow-teal: 0 0 40px rgba(13, 148, 136, 0.08);
+      --glow-violet: 0 0 40px rgba(124, 58, 237, 0.06);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) {
+        /* Inherit dark mode variables — already set as default */
+      }
+    }
+
+    /* ============================================================
+       BASE RESET
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      scroll-behavior: smooth;
+      scroll-padding-top: var(--space-16);
+    }
+    body {
+      min-height: 100dvh;
+      line-height: 1.6;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-text);
+      background-color: var(--color-bg);
+    }
+    img, svg { display: block; max-width: 100%; height: auto; }
+    h1, h2, h3, h4 { text-wrap: balance; line-height: 1.15; }
+    p, li { text-wrap: pretty; max-width: 72ch; }
+    a { color: var(--color-primary); text-decoration: none; transition: color var(--transition-interactive); }
+    a:hover { color: var(--color-primary-hover); }
+    button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+    table { border-collapse: collapse; width: 100%; }
+
+    ::selection {
+      background: rgba(20, 184, 166, 0.25);
+      color: var(--color-text);
+    }
+    :focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 3px;
+      border-radius: var(--radius-sm);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ============================================================
+       LAYOUT
+       ============================================================ */
+    .container {
+      width: 100%;
+      max-width: var(--content-wide);
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+    }
+
+    /* ============================================================
+       NAVIGATION
+       ============================================================ */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 3.5rem;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-weight: 700;
+      font-size: var(--text-sm);
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+    }
+    .nav-logo svg { flex-shrink: 0; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-5);
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-muted);
+      transition: color var(--transition-interactive);
+    }
+    .nav-links a:hover { color: var(--color-text); }
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: var(--radius-md);
+      color: var(--color-text-muted);
+      transition: color var(--transition-interactive), background var(--transition-interactive);
+    }
+    .theme-toggle:hover {
+      color: var(--color-text);
+      background: var(--color-surface-2);
+    }
+
+    /* ============================================================
+       HERO
+       ============================================================ */
+    .hero {
+      padding: clamp(var(--space-16), 8vw, var(--space-24)) 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120%;
+      height: 100%;
+      background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(139, 92, 246, 0.08) 0%, rgba(20, 184, 166, 0.05) 40%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-4);
+      border-radius: 9999px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--color-text-muted);
+      margin-bottom: var(--space-6);
+      position: relative;
+    }
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--color-accent-green);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .hero h1 {
+      font-size: var(--text-hero);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.05;
+      margin-bottom: var(--space-6);
+      position: relative;
+    }
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-blue), var(--color-accent-teal), var(--color-accent-cyan));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradient-shift 8s ease infinite;
+    }
+    @keyframes gradient-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .hero-subtitle {
+      font-size: var(--text-lg);
+      color: var(--color-text-muted);
+      max-width: 640px;
+      margin: 0 auto var(--space-8);
+      line-height: 1.5;
+    }
+    .hero-stat-row {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-8);
+      flex-wrap: wrap;
+    }
+    .hero-stat {
+      text-align: center;
+    }
+    .hero-stat-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--color-primary);
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+    .hero-stat-label {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      margin-top: var(--space-1);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+
+    /* ============================================================
+       KPI STRIP
+       ============================================================ */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      padding: var(--space-8) 0 var(--space-12);
+    }
+    .kpi-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      transition: box-shadow var(--transition-interactive), border-color var(--transition-interactive);
+    }
+    .kpi-card:hover {
+      border-color: var(--color-border);
+      box-shadow: var(--glow-teal);
+    }
+    .kpi-label {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 500;
+      margin-bottom: var(--space-2);
+    }
+    .kpi-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--color-text);
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+    .kpi-detail {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      margin-top: var(--space-1);
+    }
+
+    /* ============================================================
+       SECTION HEADERS
+       ============================================================ */
+    .section {
+      padding: clamp(var(--space-12), 6vw, var(--space-20)) 0;
+    }
+    .section-header {
+      margin-bottom: var(--space-8);
+    }
+    .section-header h2 {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: var(--space-2);
+    }
+    .section-header p {
+      font-size: var(--text-base);
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+    }
+
+    /* ============================================================
+       LEADERBOARD TABLE
+       ============================================================ */
+    .leaderboard-wrapper {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+    .leaderboard-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding: var(--space-4) var(--space-5);
+      border-bottom: 1px solid var(--color-border-subtle);
+      flex-wrap: wrap;
+    }
+    .leaderboard-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .filter-btn {
+      font-size: var(--text-xs);
+      font-weight: 500;
+      padding: var(--space-1) var(--space-3);
+      border-radius: 9999px;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-muted);
+      background: transparent;
+      transition: all var(--transition-interactive);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--color-surface-3);
+      color: var(--color-text);
+      border-color: var(--color-primary);
+    }
+    .search-input {
+      font-size: var(--text-sm);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-bg);
+      color: var(--color-text);
+      width: 200px;
+      outline: none;
+      transition: border-color var(--transition-interactive);
+    }
+    .search-input::placeholder { color: var(--color-text-faint); }
+    .search-input:focus { border-color: var(--color-primary); }
+
+    .leaderboard-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .leaderboard-table {
+      min-width: 1000px;
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+    .leaderboard-table th {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-faint);
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      border-bottom: 1px solid var(--color-border-subtle);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: color var(--transition-interactive);
+    }
+    .leaderboard-table th:hover {
+      color: var(--color-text-muted);
+    }
+    .leaderboard-table th.sorted {
+      color: var(--color-primary);
+    }
+    .leaderboard-table th .sort-arrow {
+      display: inline-block;
+      margin-left: 4px;
+      opacity: 0;
+      transition: opacity var(--transition-interactive);
+      font-size: 10px;
+    }
+    .leaderboard-table th:hover .sort-arrow,
+    .leaderboard-table th.sorted .sort-arrow {
+      opacity: 1;
+    }
+    .leaderboard-table td {
+      font-size: var(--text-sm);
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--color-border-subtle);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .leaderboard-table tbody tr {
+      transition: background var(--transition-interactive);
+      cursor: pointer;
+    }
+    .leaderboard-table tbody tr:hover {
+      background: var(--color-surface-2);
+    }
+    .leaderboard-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .model-name {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    .model-family-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-left: var(--space-2);
+    }
+    .family-llama   { background: rgba(139, 92, 246, 0.15); color: var(--color-accent-violet); }
+    .family-qwen    { background: rgba(59, 130, 246, 0.15); color: var(--color-accent-blue); }
+    .family-mistral { background: rgba(251, 191, 36, 0.15); color: var(--color-warning); }
+    .family-gemma   { background: rgba(20, 184, 166, 0.15); color: var(--color-accent-teal); }
+    .family-phi     { background: rgba(248, 113, 113, 0.15); color: var(--color-error); }
+    .family-deepseek { background: rgba(52, 211, 153, 0.15); color: var(--color-accent-green); }
+    .family-command  { background: rgba(34, 211, 238, 0.15); color: var(--color-accent-cyan); }
+    .family-dbrx    { background: rgba(139, 92, 246, 0.12); color: var(--color-accent-violet); }
+
+    .deff-value {
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .deff-bar-cell {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .deff-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--color-accent-violet), var(--color-accent-teal));
+      transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .pct-text {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+    .rank-cell {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--color-text-faint);
+      font-size: var(--text-sm);
+    }
+    .rank-1 { color: var(--color-accent-cyan); }
+    .rank-2 { color: var(--color-accent-teal); }
+    .rank-3 { color: var(--color-accent-blue); }
+
+    /* ============================================================
+       MODEL DETAIL PANEL
+       ============================================================ */
+    .detail-panel {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      margin-top: var(--space-6);
+      box-shadow: var(--shadow-md);
+      display: none;
+    }
+    .detail-panel.active { display: block; }
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+      flex-wrap: wrap;
+      gap: var(--space-4);
+    }
+    .detail-header h3 {
+      font-size: var(--text-lg);
+      font-weight: 700;
+    }
+    .detail-close {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      padding: var(--space-1) var(--space-3);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      transition: all var(--transition-interactive);
+    }
+    .detail-close:hover {
+      background: var(--color-surface-3);
+      color: var(--color-text);
+    }
+    .detail-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+    .detail-stat {
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+    .detail-stat-label {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+    .detail-stat-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      margin-top: var(--space-1);
+    }
+    .detail-charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-6);
+    }
+    .chart-container {
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+    .chart-container h4 {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      margin-bottom: var(--space-3);
+      color: var(--color-text-muted);
+    }
+    .chart-canvas-wrap {
+      position: relative;
+      height: 240px;
+    }
+    .chart-canvas-wrap canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    @media (max-width: 768px) {
+      .detail-charts { grid-template-columns: 1fr; }
+    }
+
+    /* ============================================================
+       METHODOLOGY — Deep educational content
+       ============================================================ */
+    .methodology-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-6);
+    }
+    .method-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      transition: border-color var(--transition-interactive);
+    }
+    .method-card:hover {
+      border-color: var(--color-border);
+    }
+    .method-card h3 {
+      font-size: var(--text-base);
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .method-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .method-card p, .method-card code {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      line-height: 1.7;
+    }
+    .method-card code {
+      font-family: var(--font-mono);
+      background: var(--color-surface-3);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      color: var(--color-accent-teal);
+    }
+    .formula-block {
+      margin: var(--space-4) 0;
+      padding: var(--space-4);
+      background: var(--color-surface-2);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--color-accent-violet);
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--color-text);
+      overflow-x: auto;
+    }
+
+    /* Deep methodology — long-form content blocks */
+    .methodology-deep {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+    }
+    .method-block {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
+      transition: border-color var(--transition-interactive);
+    }
+    .method-block:hover {
+      border-color: var(--color-border);
+    }
+    .method-block-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-5);
+    }
+    .method-block-number {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-sm);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .method-block h3 {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .method-block-body p {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      line-height: 1.8;
+      margin-bottom: var(--space-4);
+      max-width: 72ch;
+    }
+    .method-block-body p:last-child {
+      margin-bottom: 0;
+    }
+    .method-block-body code {
+      font-family: var(--font-mono);
+      background: var(--color-surface-3);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      color: var(--color-accent-teal);
+    }
+    .method-block-body strong {
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    /* Formula block — prominent */
+    .formula-prominent {
+      margin: var(--space-6) 0;
+      padding: var(--space-6);
+      background: var(--color-surface-2);
+      border-radius: var(--radius-lg);
+      border-left: 4px solid var(--color-accent-violet);
+      text-align: center;
+    }
+    .formula-prominent .formula-label {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+      margin-bottom: var(--space-3);
+    }
+    .formula-prominent .formula-expression {
+      font-family: var(--font-mono);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--color-text);
+      letter-spacing: -0.01em;
+    }
+    .formula-prominent .formula-note {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+      margin-top: var(--space-3);
+      line-height: 1.6;
+      max-width: 56ch;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Step list inside method blocks */
+    .method-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin: var(--space-4) 0;
+    }
+    .method-steps li {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      line-height: 1.7;
+      padding-left: var(--space-8);
+      position: relative;
+    }
+    .method-steps li::before {
+      content: attr(data-step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      color: var(--color-accent-violet);
+      width: var(--space-6);
+    }
+
+    /* Definition list for leaderboard reading */
+    .def-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      margin: var(--space-4) 0;
+    }
+    .def-item {
+      padding-left: var(--space-5);
+      border-left: 2px solid var(--color-border);
+    }
+    .def-item-term {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-accent-teal);
+      margin-bottom: var(--space-1);
+    }
+    .def-item-desc {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      line-height: 1.7;
+    }
+
+    /* ============================================================
+       VISION CARDS
+       ============================================================ */
+    .vision-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: var(--space-6);
+    }
+    .vision-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      transition: border-color var(--transition-interactive), box-shadow var(--transition-interactive);
+    }
+    .vision-card:hover {
+      border-color: var(--color-border);
+      box-shadow: var(--glow-violet);
+    }
+    .vision-card h3 {
+      font-size: var(--text-base);
+      font-weight: 700;
+      margin-bottom: var(--space-3);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .vision-card p {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      line-height: 1.7;
+    }
+
+    /* ============================================================
+       SENTRA CTA
+       ============================================================ */
+    .sentra-cta {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+      position: relative;
+      overflow: hidden;
+    }
+    .sentra-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--color-accent-violet), var(--color-accent-teal), var(--color-accent-cyan));
+    }
+    .sentra-cta-inner {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-6);
+    }
+    .sentra-cta-logo {
+      flex-shrink: 0;
+    }
+    .sentra-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-top: var(--space-5);
+      padding: var(--space-2) var(--space-5);
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-bg);
+      background: linear-gradient(135deg, var(--color-accent-violet), var(--color-accent-teal));
+      transition: opacity var(--transition-interactive), transform var(--transition-interactive);
+    }
+    .sentra-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      color: var(--color-bg);
+    }
+    @media (max-width: 640px) {
+      .sentra-cta-logo { display: none; }
+      .sentra-cta { padding: var(--space-6); }
+    }
+
+    /* ============================================================
+       FOOTER
+       ============================================================ */
+    .footer {
+      padding: var(--space-12) 0 var(--space-8);
+      border-top: 1px solid var(--color-border-subtle);
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-4);
+    }
+    .footer p {
+      font-size: var(--text-xs);
+      color: var(--color-text-faint);
+    }
+    .footer a {
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+    }
+    .footer a:hover { color: var(--color-text); }
+    .footer-links {
+      display: flex;
+      gap: var(--space-5);
+      list-style: none;
+    }
+
+    /* ============================================================
+       UPCOMING MODELS
+       ============================================================ */
+    .upcoming-card {
+      background: var(--color-surface);
+      border: 1px dashed var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      transition: border-color var(--transition-interactive);
+    }
+    .upcoming-card:hover {
+      border-color: var(--color-text-faint);
+    }
+    .upcoming-card-name {
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text);
+    }
+    .upcoming-card-meta {
+      font-size: 10px;
+      color: var(--color-text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .upcoming-pending {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      background: var(--color-surface-3);
+      color: var(--color-text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 640px) {
+      .hero-stat-row { gap: var(--space-6); }
+      .kpi-strip { grid-template-columns: 1fr 1fr; }
+      .nav-links li:not(:last-child) { display: none; }
+      .leaderboard-toolbar { flex-direction: column; align-items: flex-start; }
+      .search-input { width: 100%; }
+      .methodology-grid { grid-template-columns: 1fr; }
+      .vision-grid { grid-template-columns: 1fr; }
+      .method-block { padding: var(--space-5); }
+    }
+
+    /* ============================================================
+       SCROLL ANIMATIONS
+       ============================================================ */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 500ms ease, transform 500ms ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="#" class="nav-logo" aria-label="The Spectral Index">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="2" y="14" width="3" height="8" rx="1" fill="currentColor" opacity="0.3"/>
+          <rect x="7" y="10" width="3" height="12" rx="1" fill="currentColor" opacity="0.5"/>
+          <rect x="12" y="4" width="3" height="18" rx="1" fill="url(#logo-grad)"/>
+          <rect x="17" y="8" width="3" height="14" rx="1" fill="currentColor" opacity="0.4"/>
+          <defs><linearGradient id="logo-grad" x1="13.5" y1="4" x2="13.5" y2="22" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#14b8a6"/>
+          </linearGradient></defs>
+        </svg>
+        The Spectral Index
+      </a>
+      <ul class="nav-links">
+        <li><a href="#leaderboard">Leaderboard</a></li>
+        <li><a href="#upcoming">Upcoming</a></li>
+        <li><a href="#methodology">Methodology</a></li>
+        <li><a href="#vision">Why It Matters</a></li>
+        <li><a href="#contribute">Contribute</a></li>
+        <li><a href="https://sentra.app" target="_blank" rel="noopener" style="color: var(--color-text);">Sentra</a></li>
+        <li><a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener">GitHub</a></li>
+        <li>
+          <button class="theme-toggle" data-theme-toggle aria-label="Toggle theme">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Research from <a href="https://sentra.app" target="_blank" rel="noopener" style="color: var(--color-text); font-weight: 600;">Sentra</a> &middot; Updated April 2026
+      </div>
+      <h1>
+        How many dimensions does<br/>
+        your model <span class="gradient-text">actually use</span>?
+      </h1>
+      <p class="hero-subtitle">
+        Measuring effective dimensionality of KV cache representations across every major open model. The canonical reference for spectral structure in LLMs.
+      </p>
+      <p style="font-size: var(--text-sm); color: var(--color-text-faint); margin: 0 auto var(--space-8); max-width: 540px;">Born from inference research at <a href="https://sentra.app" target="_blank" rel="noopener" style="color: var(--color-text-muted);">Sentra</a>, where we compress intelligence to make it run everywhere.</p>
+      <div class="hero-stat-row">
+        <div class="hero-stat">
+          <div class="hero-stat-value">6</div>
+          <div class="hero-stat-label">Models Measured</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">~3%</div>
+          <div class="hero-stat-label">Signal Fraction</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">4</div>
+          <div class="hero-stat-label">Architecture Families</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI STRIP -->
+  <section class="container">
+    <div class="kpi-strip fade-in">
+      <div class="kpi-card">
+        <div class="kpi-label">Key d_eff Mean</div>
+        <div class="kpi-value" style="color: var(--color-accent-teal)">4.05</div>
+        <div class="kpi-detail">Across head_dim=128 models (n=5)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Value d_eff Mean</div>
+        <div class="kpi-value" style="color: var(--color-accent-violet)">48.75</div>
+        <div class="kpi-detail">10–14x larger than keys</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Mean Spectral Gap (kappa)</div>
+        <div class="kpi-value" style="color: var(--color-accent-blue)">1.216</div>
+        <div class="kpi-detail">lambda_{d_eff} / lambda_{d_eff+1}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Signal Fraction</div>
+        <div class="kpi-value" style="color: var(--color-accent-cyan)">3.1–3.4%</div>
+        <div class="kpi-detail">Measured range across 6 models</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container"><div class="section-divider"></div></div>
+
+  <!-- LEADERBOARD -->
+  <section id="leaderboard" class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>Leaderboard</h2>
+        <p>Effective dimensionality measurements for keys and values. Lower d_eff / head_dim ratio means more spectral concentration — better compression potential. Click any row for details.</p>
+      </div>
+
+      <div class="leaderboard-wrapper fade-in">
+        <div class="leaderboard-toolbar">
+          <div class="leaderboard-toolbar-left">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="qwen">Qwen</button>
+            <button class="filter-btn" data-filter="llama">Llama</button>
+            <button class="filter-btn" data-filter="mistral">Mistral</button>
+            <button class="filter-btn" data-filter="gemma">Gemma</button>
+          </div>
+          <input class="search-input" type="text" placeholder="Search models..." id="model-search" />
+        </div>
+        <div class="leaderboard-scroll">
+          <table class="leaderboard-table" id="leaderboard-table">
+            <thead>
+              <tr>
+                <th data-sort="rank" class="sorted">Rank <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="name">Model <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="params">Params <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="head_dim">Head Dim <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="layers">Layers <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="n_kv_heads">KV Heads <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="key_deff">Key d_eff <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="val_deff">Val d_eff <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="key_pct">Key % <span class="sort-arrow">&#9650;</span></th>
+                <th data-sort="kappa">Kappa <span class="sort-arrow">&#9650;</span></th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Model Detail Panel -->
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-header">
+          <h3 id="detail-title">Model Details</h3>
+          <button class="detail-close" id="detail-close">Close</button>
+        </div>
+        <div class="detail-stats" id="detail-stats"></div>
+        <div class="detail-charts" id="detail-charts">
+          <div class="chart-container">
+            <h4>Key d_eff by Layer</h4>
+            <div class="chart-canvas-wrap"><canvas id="chart-key-layers"></canvas></div>
+          </div>
+          <div class="chart-container">
+            <h4>Kappa by Layer</h4>
+            <div class="chart-canvas-wrap"><canvas id="chart-kappa-layers"></canvas></div>
+          </div>
+          <div class="chart-container">
+            <h4>Eigenvalue Spectrum (Keys, illustrative)</h4>
+            <div class="chart-canvas-wrap"><canvas id="chart-eigenvalues"></canvas></div>
+          </div>
+          <div class="chart-container">
+            <h4>Cumulative Variance (Keys, illustrative)</h4>
+            <div class="chart-canvas-wrap"><canvas id="chart-cumvar"></canvas></div>
+          </div>
+        </div>
+        <div id="detail-no-layers" style="display:none; padding: var(--space-6); text-align: center; color: var(--color-text-muted); font-size: var(--text-sm); background: var(--color-surface-2); border-radius: var(--radius-md); margin-bottom: var(--space-6);">
+          Per-layer data not yet published. Only Llama 3.1-8B has per-layer statistics in the paper.
+        </div>
+      </div>
+
+      <!-- Source Attribution -->
+      <p style="font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-5); line-height: 1.7;">
+        Source: SpectralQuant NeurIPS paper (Gopinath, 2026). All measurements verified with 10-seed CI on calibration data from WikiText-103.
+      </p>
+    </div>
+  </section>
+
+  <div class="container"><div class="section-divider"></div></div>
+
+  <!-- UPCOMING MODELS -->
+  <section id="upcoming" class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>Upcoming Models</h2>
+        <p>Models we plan to measure next. Submit your own measurements via <a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener">GitHub PR</a>.</p>
+      </div>
+      <div class="upcoming-grid fade-in" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-3);">
+      </div>
+    </div>
+  </section>
+
+  <div class="container"><div class="section-divider"></div></div>
+
+  <!-- METHODOLOGY — Deep Educational Content -->
+  <section id="methodology" class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>Methodology</h2>
+        <p>Understanding effective dimensionality and why it matters for every inference team.</p>
+      </div>
+
+      <div class="methodology-deep fade-in">
+
+        <!-- Part 1: The Problem -->
+        <div class="method-block">
+          <div class="method-block-header">
+            <div class="method-block-number" style="background: rgba(139,92,246,0.15); color: var(--color-accent-violet);">1</div>
+            <h3>The KV Cache Bottleneck</h3>
+          </div>
+          <div class="method-block-body">
+            <p>When a language model generates text, each attention layer stores two vectors per token: a <strong>key</strong> (what that token represents) and a <strong>value</strong> (what information it contributes). These key-value pairs are cached so they don't need to be recomputed for every new token. This is the <strong>KV cache</strong>.</p>
+            <p>The problem: the KV cache grows linearly with context length. At 8,192 tokens on a 32-layer model with 128-dimensional heads, a single user's KV cache consumes hundreds of megabytes. Serve 100 concurrent users, and you're dedicating tens of gigabytes of precious GPU memory purely to remembering what was already said.</p>
+            <p>Every major inference system — <strong>vLLM</strong>, <strong>TensorRT-LLM</strong>, <strong>SGLang</strong> — is fundamentally constrained by KV cache memory. Compressing it without destroying attention quality is the central challenge.</p>
+          </div>
+        </div>
+
+        <!-- Part 2: The Key Insight -->
+        <div class="method-block">
+          <div class="method-block-header">
+            <div class="method-block-number" style="background: rgba(59,130,246,0.15); color: var(--color-accent-blue);">2</div>
+            <h3>Not All Dimensions Are Equal</h3>
+          </div>
+          <div class="method-block-body">
+            <p>The standard assumption is that all 128 dimensions of a key vector are equally important. Random rotation methods like <strong>TurboQuant</strong> (Zandieh et al., ICLR 2026) exploit this assumption — they rotate vectors to spread energy uniformly, then quantize.</p>
+            <p>But this assumption is wrong. When you compute the covariance matrix of key vectors across many sequences and eigendecompose it, you find a dramatic <strong>spectral gap</strong>: a handful of dimensions carry almost all the variance, while the rest carry noise.</p>
+            <p>Across every model we've measured — <strong>Llama</strong>, <strong>Qwen</strong>, <strong>Mistral</strong>, <strong>Gemma</strong> — the effective dimensionality of key vectors is approximately <strong>3–4% of the head dimension</strong>. For 128-dim heads, that's ~4 dimensions out of 128. The other 124 dimensions contribute almost nothing to attention scores.</p>
+          </div>
+        </div>
+
+        <!-- Part 3: How We Measure -->
+        <div class="method-block">
+          <div class="method-block-header">
+            <div class="method-block-number" style="background: rgba(20,184,166,0.15); color: var(--color-accent-teal);">3</div>
+            <h3>The Measurement Pipeline</h3>
+          </div>
+          <div class="method-block-body">
+            <p>For each model, the measurement is straightforward:</p>
+            <ol class="method-steps">
+              <li data-step="1.">Run 100 calibration sequences from <strong>WikiText-103</strong> through the model with caching enabled.</li>
+              <li data-step="2.">For every <code>(layer, head)</code> pair, collect all key vectors and value vectors separately.</li>
+              <li data-step="3.">Compute the uncentered covariance matrix: <code>C = X<sup>T</sup>X / n</code>, where <code>X</code> is the matrix of collected vectors.</li>
+              <li data-step="4.">Eigendecompose: <code>C = V diag(λ) V<sup>T</sup></code>. The eigenvalues <code>λ₁ ≥ λ₂ ≥ … ≥ λ_d</code> reveal how variance is distributed across dimensions.</li>
+              <li data-step="5.">Compute the participation ratio (effective dimensionality):</li>
+            </ol>
+
+            <div class="formula-prominent">
+              <div class="formula-label">Participation Ratio (Effective Dimensionality)</div>
+              <div class="formula-expression">d<sub>eff</sub> = (Σ λ<sub>i</sub>)² / Σ(λ<sub>i</sub>²)</div>
+              <div class="formula-note">If all eigenvalues are equal, d<sub>eff</sub> = d (full dimensionality). If one eigenvalue dominates, d<sub>eff</sub> ≈ 1. The participation ratio captures the smooth transition between these extremes.</div>
+            </div>
+
+            <ol class="method-steps">
+              <li data-step="6.">Compute the spectral gap: <code>κ = λ_{d_eff} / λ_{d_eff+1}</code> — the ratio between the last "signal" eigenvalue and the first "noise" eigenvalue. Higher κ means a sharper boundary between signal and noise.</li>
+              <li data-step="7.">Report per-layer breakdowns, cumulative variance thresholds (dims for 95% and 99% variance), and representative eigenvalue spectra.</li>
+            </ol>
+
+            <p>The entire pipeline runs in <strong>~15 seconds per model</strong> on a single GPU. The covariance accumulation uses <code>float64</code> for numerical stability.</p>
+          </div>
+        </div>
+
+        <!-- Part 4: What the Numbers Mean -->
+        <div class="method-block">
+          <div class="method-block-header">
+            <div class="method-block-number" style="background: rgba(34,211,238,0.15); color: var(--color-accent-cyan);">4</div>
+            <h3>Reading the Leaderboard</h3>
+          </div>
+          <div class="method-block-body">
+            <div class="def-list">
+              <div class="def-item">
+                <div class="def-item-term">d_eff (key)</div>
+                <div class="def-item-desc">The effective dimensionality of key vectors. Lower = more concentrated signal = better compression potential. Across all models measured, key d<sub>eff</sub> ranges from <strong>3.64</strong> (Llama 8B) to <strong>4.30</strong> (Qwen 7B) on 128-dim heads.</div>
+              </div>
+              <div class="def-item">
+                <div class="def-item-term">d_eff (value)</div>
+                <div class="def-item-desc">The effective dimensionality of value vectors. Consistently <strong>10–15×</strong> larger than keys. This asymmetry is fundamental: keys implement a selection mechanism ("what is relevant?"), which is inherently low-dimensional. Values implement information retrieval ("what content to return?"), which requires higher-dimensional capacity.</div>
+              </div>
+              <div class="def-item">
+                <div class="def-item-term">Key %</div>
+                <div class="def-item-desc">d<sub>eff</sub> / head_dim — the fraction of dimensions carrying signal. The universal finding: <strong>~3% for keys</strong>. This is the central empirical result.</div>
+              </div>
+              <div class="def-item">
+                <div class="def-item-term">Kappa (κ)</div>
+                <div class="def-item-desc">The spectral gap ratio. Values near 1.2 mean a clean but gradual boundary between signal and noise. This is sufficient for effective spectral compression.</div>
+              </div>
+              <div class="def-item">
+                <div class="def-item-term">Why keys ≠ values</div>
+                <div class="def-item-desc">The KV asymmetry is perhaps the most important finding. Keys answer "what is this token about?" — a question with ~4 independent axes (recency, semantic category, syntactic role, domain). Values answer "what information does this token contribute?" — which requires the full representational capacity of the model. This asymmetry determines optimal compression strategy: <strong>compress keys aggressively, treat values more carefully</strong>.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Part 5: Connection to Compression -->
+        <div class="method-block">
+          <div class="method-block-header">
+            <div class="method-block-number" style="background: rgba(52,211,153,0.15); color: var(--color-accent-green);">5</div>
+            <h3>From Measurement to Compression</h3>
+          </div>
+          <div class="method-block-body">
+            <p>The spectral structure measured here directly enables <strong>SpectralQuant-style compression</strong>. Instead of treating all dimensions equally (as random rotation methods do), spectral-aware compression:</p>
+            <ol class="method-steps">
+              <li data-step="1."><strong>Rotates</strong> vectors into their eigenbasis, sorting dimensions by importance</li>
+              <li data-step="2."><strong>Allocates more bits</strong> to the high-signal dimensions (the top d<sub>eff</sub>)</li>
+              <li data-step="3."><strong>Allocates fewer bits</strong> — or skips error correction entirely — on the remaining ~96% noise dimensions</li>
+            </ol>
+            <p>The result on <strong>Qwen 2.5-14B</strong>: cosine similarity <code>0.9485</code> vs TurboQuant's <code>0.9226</code> at <strong>5.95× compression</strong> vs 5.02× — simultaneously better quality and better compression. This isn't possible without knowing the spectral structure first.</p>
+            <p>The leaderboard is the first step: measuring which models have exploitable structure, and how much.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="container"><div class="section-divider"></div></div>
+
+  <!-- WHY THIS MATTERS + CONTRIBUTE -->
+  <section id="vision" class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>Why This Matters</h2>
+        <p>The spectral structure of attention is a universal property with implications far beyond KV cache compression.</p>
+      </div>
+
+      <div class="vision-grid fade-in">
+
+        <div class="vision-card">
+          <h3>
+            <span class="method-icon" style="background: rgba(20,184,166,0.15); color: var(--color-accent-teal);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="3"/></svg>
+            </span>
+            Inference Cost Reduction
+          </h3>
+          <p>Every major cloud provider spends billions on GPU inference. KV cache memory is the primary bottleneck for long-context serving. A 6× compression ratio from spectral-aware methods means serving 6× more concurrent users on the same hardware. At scale, this translates to hundreds of millions of dollars in infrastructure savings.</p>
+        </div>
+
+        <div class="vision-card">
+          <h3>
+            <span class="method-icon" style="background: rgba(139,92,246,0.15); color: var(--color-accent-violet);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+            </span>
+            On-Device Intelligence
+          </h3>
+          <p>Mobile phones have 6–12 GB of shared RAM. A 7B model at 8K context consumes 2 GB just for the KV cache. With spectral compression, that drops to 333 MB — enabling meaningful long-context conversations on phones and edge devices. The spectral index tells deployment engineers exactly what compression ratio is achievable for their model.</p>
+        </div>
+
+        <div class="vision-card">
+          <h3>
+            <span class="method-icon" style="background: rgba(59,130,246,0.15); color: var(--color-accent-blue);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </span>
+            Compression Strategy Selection
+          </h3>
+          <p>Different models have different spectral profiles. Some have sharp spectral gaps (high κ) that make aggressive compression safe. Others have gentler gradients that require more careful treatment. The leaderboard provides the data needed to make this decision before committing to a compression strategy.</p>
+        </div>
+
+        <div class="vision-card">
+          <h3>
+            <span class="method-icon" style="background: rgba(34,211,238,0.15); color: var(--color-accent-cyan);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </span>
+            The Keys ≠ Values Insight
+          </h3>
+          <p>The 10–15× asymmetry between key and value d<sub>eff</sub> is a structural finding about how attention works, not just a compression trick. It suggests that the "selection" channel (keys/queries) operates in a fundamentally lower-dimensional space than the "information" channel (values). Understanding this asymmetry has implications for attention mechanism design, not just compression.</p>
+        </div>
+
+        <div class="vision-card">
+          <h3>
+            <span class="method-icon" style="background: rgba(52,211,153,0.15); color: var(--color-accent-green);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </span>
+            Cross-Modal Prediction
+          </h3>
+          <p>We've measured language models. But the same attention mechanism operates in vision transformers (ViT, DINOv2), audio models (Whisper), video transformers (VideoMAE), diffusion models (DiT), and protein structure predictors (ESMFold). We predict spectral gaps exist in all of them — with modality-specific d<sub>eff</sub> values that reflect the intrinsic dimensionality of each domain's "relevance" question.</p>
+        </div>
+
+        <div class="vision-card">
+          <h3>
+            <span class="method-icon" style="background: rgba(251,191,36,0.15); color: var(--color-warning);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+            </span>
+            Open Research Questions
+          </h3>
+          <p>Does d<sub>eff</sub> change during training? Is there a minimum d<sub>eff</sub> for a given task complexity? Can you predict d<sub>eff</sub> from architecture alone? Does fine-tuning change the spectral structure? Is the 3% ratio a consequence of optimization dynamics, or data structure? Every measurement on this leaderboard brings us closer to answering these questions.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="container"><div class="section-divider"></div></div>
+
+  <!-- CONTRIBUTE -->
+  <section id="contribute" class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>Contribute</h2>
+        <p>Measuring d<sub>eff</sub> takes 50 lines of Python and 15 seconds of GPU time per model. The barrier is access, not difficulty. We want measurements on every publicly available transformer model — language, vision, audio, protein, anything with attention.</p>
+      </div>
+      <div class="fade-in" style="background: var(--color-surface); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); padding: var(--space-6); max-width: 720px;">
+        <div style="background: var(--color-surface-2); border-radius: var(--radius-md); padding: var(--space-4); overflow-x: auto; border-left: 3px solid var(--color-accent-violet);">
+          <pre style="margin: 0; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text); line-height: 1.7; white-space: pre;"><code>git clone https://github.com/niashwin/spectral-index.git
+cd spectral-index
+pip install -e .
+
+# Measure any model
+python -m src.measure \
+  --model &quot;meta-llama/Llama-3.1-8B-Instruct&quot; \
+  --n-sequences 100 \
+  --max-length 512 \
+  --output results/llama-3.1-8b.json
+
+# Results include per-layer d_eff, kappa,
+# eigenvalue spectra, and variance thresholds</code></pre>
+        </div>
+        <div style="margin-top: var(--space-5); display: flex; gap: var(--space-3); flex-wrap: wrap;">
+          <a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener" class="sentra-btn" style="font-size: var(--text-xs); padding: var(--space-2) var(--space-4);">View on GitHub &rarr;</a>
+          <a href="https://arxiv.org/abs/2504.19874" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); font-size: var(--text-xs); font-weight: 600; color: var(--color-text-muted); border: 1px solid var(--color-border); transition: all 200ms;">Read the Paper &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SENTRA CTA SECTION -->
+  <section class="section" style="padding-bottom: 0;">
+    <div class="container">
+      <div class="sentra-cta fade-in">
+        <div class="sentra-cta-inner">
+          <div class="sentra-cta-text">
+            <div style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; color: var(--color-text-faint); margin-bottom: var(--space-2);">Why we built this</div>
+            <h3 style="font-size: var(--text-lg); font-weight: 700; margin-bottom: var(--space-3);">Efficient inference is the foundation of enterprise intelligence.</h3>
+            <p style="font-size: var(--text-sm); color: var(--color-text-muted); line-height: 1.7; max-width: 540px;">SpectralQuant was born at <strong style="color: var(--color-text);">Sentra</strong>, where we're building the organizational memory system that turns a company's collective knowledge into living intelligence. Processing that much context at enterprise scale demands compression that doesn't destroy signal. The spectral structure measured here is what makes that possible.</p>
+            <a href="https://sentra.app" target="_blank" rel="noopener" class="sentra-btn">Learn more about Sentra &rarr;</a>
+          </div>
+          <div class="sentra-cta-logo" aria-hidden="true">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+              <rect width="64" height="64" rx="16" fill="url(#sentra-grad)" opacity="0.12"/>
+              <text x="32" y="40" text-anchor="middle" font-family="var(--font-body)" font-size="22" font-weight="700" fill="url(#sentra-grad-text)">S</text>
+              <defs>
+                <linearGradient id="sentra-grad" x1="0" y1="0" x2="64" y2="64">
+                  <stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#14b8a6"/>
+                </linearGradient>
+                <linearGradient id="sentra-grad-text" x1="0" y1="20" x2="64" y2="44">
+                  <stop stop-color="#8b5cf6"/><stop offset="1" stop-color="#14b8a6"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>The Spectral Index by <a href="https://sentra.app" target="_blank" rel="noopener">Sentra</a>. Built on <a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener">SpectralQuant</a> by Ashwin Gopinath, 2026.</p>
+      <ul class="footer-links">
+        <li><a href="https://sentra.app" target="_blank" rel="noopener">Sentra</a></li>
+        <li><a href="https://github.com/niashwin/spectral-index" target="_blank" rel="noopener">GitHub</a></li>
+        <li><a href="https://arxiv.org/abs/2504.19874" target="_blank" rel="noopener">Paper</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+       ============================================================ -->
+  <script>
+    // ---- Theme Toggle ----
+    (function() {
+      const toggle = document.querySelector('[data-theme-toggle]');
+      const root = document.documentElement;
+      let theme = 'dark';  // Default to dark — scientific aesthetic
+      root.setAttribute('data-theme', theme);
+
+      function updateIcon() {
+        if (!toggle) return;
+        toggle.innerHTML = theme === 'dark'
+          ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+          : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+        toggle.setAttribute('aria-label', 'Switch to ' + (theme === 'dark' ? 'light' : 'dark') + ' mode');
+      }
+      updateIcon();
+
+      toggle && toggle.addEventListener('click', () => {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', theme);
+        updateIcon();
+        // Re-render charts with new theme
+        if (currentDetailModel) showDetail(currentDetailModel);
+      });
+    })();
+
+    // ---- Verified Model Data (SpectralQuant NeurIPS paper, Tables 1, 8, Appendix B) ----
+    const models = [
+      {
+        name: "Qwen 2.5-1.5B-Instruct",
+        family: "qwen", params: "1.5B", head_dim: 128, layers: 28, n_kv_heads: 2,
+        key_deff: 3.95, val_deff: 40.34, kappa: 1.247,
+        key_layers: null, kappa_layers: null
+      },
+      {
+        name: "Qwen 2.5-7B-Instruct",
+        family: "qwen", params: "7B", head_dim: 128, layers: 28, n_kv_heads: 4,
+        key_deff: 4.30, val_deff: 52.15, kappa: 1.238,
+        key_layers: null, kappa_layers: null
+      },
+      {
+        name: "Qwen 2.5-14B-Instruct",
+        family: "qwen", params: "14B", head_dim: 128, layers: 48, n_kv_heads: 4,
+        key_deff: 4.17, val_deff: 52.11, kappa: 1.220,
+        key_layers: null, kappa_layers: null
+      },
+      {
+        name: "Llama 3.1-8B-Instruct",
+        family: "llama", params: "8B", head_dim: 128, layers: 32, n_kv_heads: 8,
+        key_deff: 3.64, val_deff: 44.21, kappa: 1.257,
+        key_layers: [3.375,3.375,3.500,3.250,3.250,3.750,3.500,3.375,4.250,4.375,4.625,4.750,2.750,5.375,4.500,3.875,3.750,3.750,3.750,3.625,4.000,3.875,3.625,3.500,3.250,3.125,3.125,3.375,3.250,2.875,3.625,3.000],
+        kappa_layers: [1.499,1.365,1.185,1.191,1.374,1.250,1.283,1.212,1.301,1.173,1.186,1.217,1.374,1.153,1.220,1.253,1.234,1.287,1.316,1.272,1.190,1.201,1.284,1.227,1.323,1.207,1.236,1.268,1.236,1.194,1.271,1.238]
+      },
+      {
+        name: "Mistral 7B-Instruct-v0.3",
+        family: "mistral", params: "7B", head_dim: 128, layers: 32, n_kv_heads: 8,
+        key_deff: 4.18, val_deff: 54.93, kappa: 1.222,
+        key_layers: null, kappa_layers: null
+      },
+      {
+        name: "Gemma 2-9B-IT",
+        family: "gemma", params: "9B", head_dim: 256, layers: 42, n_kv_heads: 8,
+        key_deff: 8.20, val_deff: null, kappa: 1.114,
+        key_layers: null, kappa_layers: null
+      },
+    ];
+
+    // Compute derived fields
+    models.forEach(m => {
+      m.key_pct = (m.key_deff / m.head_dim * 100);
+    });
+
+    // Sort by key_pct ascending (most concentrated first)
+    models.sort((a, b) => a.key_pct - b.key_pct);
+    models.forEach((m, i) => m.rank = i + 1);
+
+    // ---- Upcoming Models ----
+    const upcomingModels = [
+      { name: "Llama 3.1-70B", family: "llama", params: "70B" },
+      { name: "Llama 3.1-405B", family: "llama", params: "405B" },
+      { name: "Llama 3.3-70B", family: "llama", params: "70B" },
+      { name: "Llama 3.2-3B", family: "llama", params: "3B" },
+      { name: "Qwen 2.5-32B", family: "qwen", params: "32B" },
+      { name: "Qwen 2.5-72B", family: "qwen", params: "72B" },
+      { name: "Qwen 2.5-Coder-7B", family: "qwen", params: "7B" },
+      { name: "Mistral Small 24B", family: "mistral", params: "24B" },
+      { name: "Mistral Nemo 12B", family: "mistral", params: "12B" },
+      { name: "Mixtral 8x7B", family: "mistral", params: "47B" },
+      { name: "Gemma 2-2B", family: "gemma", params: "2B" },
+      { name: "Gemma 2-27B", family: "gemma", params: "27B" },
+      { name: "Phi-3-Mini", family: "phi", params: "3.8B" },
+      { name: "Phi-3-Small", family: "phi", params: "7B" },
+      { name: "Phi-3-Medium", family: "phi", params: "14B" },
+      { name: "DeepSeek-V2-Lite", family: "deepseek", params: "16B" },
+      { name: "DeepSeek-V2", family: "deepseek", params: "236B" },
+      { name: "DeepSeek-V3", family: "deepseek", params: "671B" },
+      { name: "Command-R 35B", family: "command", params: "35B" },
+      { name: "Command-R+ 104B", family: "command", params: "104B" },
+      { name: "DBRX 132B", family: "dbrx", params: "132B" },
+    ];
+
+    // Render upcoming models grid
+    const upcomingGrid = document.querySelector('.upcoming-grid');
+    upcomingGrid.innerHTML = upcomingModels.map(m => `
+      <div class="upcoming-card">
+        <div>
+          <div class="upcoming-card-name">${m.name}</div>
+          <div class="upcoming-card-meta">${m.family} · ${m.params}</div>
+        </div>
+        <span class="upcoming-pending">Pending</span>
+      </div>
+    `).join('');
+
+    // ---- Render Leaderboard ----
+    const tbody = document.getElementById('leaderboard-body');
+    let currentSort = { field: 'rank', dir: 'asc' };
+    let currentFilter = 'all';
+
+    function renderTable(data) {
+      const maxBar = Math.max(...data.map(m => m.key_pct));
+      tbody.innerHTML = data.map(m => {
+        const valDisplay = m.val_deff !== null ? m.val_deff.toFixed(1) : '\u2014';
+        return `
+        <tr data-model="${m.name}" data-family="${m.family}">
+          <td class="rank-cell ${m.rank <= 3 ? 'rank-' + m.rank : ''}">${m.rank}</td>
+          <td>
+            <span class="model-name">${m.name}</span>
+            <span class="model-family-tag family-${m.family}">${m.family}</span>
+          </td>
+          <td style="color: var(--color-text-muted);">${m.params}</td>
+          <td><span style="font-family: var(--font-mono);">${m.head_dim}</span></td>
+          <td><span style="font-family: var(--font-mono); color: var(--color-text-muted);">${m.layers}</span></td>
+          <td><span style="font-family: var(--font-mono); color: var(--color-text-muted);">${m.n_kv_heads}</span></td>
+          <td><span class="deff-value" style="color: var(--color-accent-teal);">${m.key_deff.toFixed(2)}</span></td>
+          <td><span class="deff-value" style="color: var(--color-accent-violet);">${valDisplay}</span></td>
+          <td>
+            <div class="deff-bar-cell">
+              <div class="deff-bar" style="width: ${(m.key_pct / maxBar * 100).toFixed(0)}%; min-width: 8px; max-width: 80px;"></div>
+              <span class="pct-text">${m.key_pct.toFixed(1)}%</span>
+            </div>
+          </td>
+          <td><span style="font-family: var(--font-mono); color: var(--color-accent-blue);">${m.kappa.toFixed(3)}</span></td>
+        </tr>`;
+      }).join('');
+
+      // Attach click handlers
+      tbody.querySelectorAll('tr').forEach(tr => {
+        tr.addEventListener('click', () => {
+          const name = tr.dataset.model;
+          const model = models.find(m => m.name === name);
+          if (model) showDetail(model);
+        });
+      });
+    }
+
+    function getFilteredSorted() {
+      let data = [...models];
+      if (currentFilter !== 'all') {
+        data = data.filter(m => m.family === currentFilter);
+      }
+      const search = document.getElementById('model-search').value.toLowerCase();
+      if (search) {
+        data = data.filter(m => m.name.toLowerCase().includes(search) || m.family.toLowerCase().includes(search));
+      }
+      const { field, dir } = currentSort;
+      data.sort((a, b) => {
+        let va = a[field], vb = b[field];
+        // Handle null val_deff
+        if (va === null) va = dir === 'asc' ? Infinity : -Infinity;
+        if (vb === null) vb = dir === 'asc' ? Infinity : -Infinity;
+        if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+        if (va < vb) return dir === 'asc' ? -1 : 1;
+        if (va > vb) return dir === 'asc' ? 1 : -1;
+        return 0;
+      });
+      return data;
+    }
+
+    renderTable(getFilteredSorted());
+
+    // ---- Sort ----
+    document.querySelectorAll('.leaderboard-table th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const field = th.dataset.sort;
+        if (currentSort.field === field) {
+          currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          currentSort = { field, dir: 'asc' };
+        }
+        document.querySelectorAll('.leaderboard-table th').forEach(h => h.classList.remove('sorted'));
+        th.classList.add('sorted');
+        th.querySelector('.sort-arrow').innerHTML = currentSort.dir === 'asc' ? '&#9650;' : '&#9660;';
+        renderTable(getFilteredSorted());
+      });
+    });
+
+    // ---- Filter ----
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderTable(getFilteredSorted());
+      });
+    });
+
+    // ---- Search ----
+    document.getElementById('model-search').addEventListener('input', () => {
+      renderTable(getFilteredSorted());
+    });
+
+    // ---- Detail Panel ----
+    let currentDetailModel = null;
+    let chartInstances = [];
+
+    function destroyCharts() {
+      chartInstances.forEach(c => c.destroy());
+      chartInstances = [];
+    }
+
+    function getChartColors() {
+      const style = getComputedStyle(document.documentElement);
+      return {
+        teal: style.getPropertyValue('--color-accent-teal').trim(),
+        violet: style.getPropertyValue('--color-accent-violet').trim(),
+        blue: style.getPropertyValue('--color-accent-blue').trim(),
+        cyan: style.getPropertyValue('--color-accent-cyan').trim(),
+        textMuted: style.getPropertyValue('--color-text-muted').trim(),
+        textFaint: style.getPropertyValue('--color-text-faint').trim(),
+        border: style.getPropertyValue('--color-border-subtle').trim(),
+        surface: style.getPropertyValue('--color-surface-2').trim(),
+      };
+    }
+
+    function showDetail(model) {
+      currentDetailModel = model;
+      destroyCharts();
+      const panel = document.getElementById('detail-panel');
+      const chartsEl = document.getElementById('detail-charts');
+      const noLayersEl = document.getElementById('detail-no-layers');
+      panel.classList.add('active');
+      document.getElementById('detail-title').textContent = model.name;
+
+      // Stats
+      const valDeffDisplay = model.val_deff !== null ? model.val_deff.toFixed(1) : '\u2014';
+      const statsEl = document.getElementById('detail-stats');
+      statsEl.innerHTML = `
+        <div class="detail-stat">
+          <div class="detail-stat-label">Key d_eff</div>
+          <div class="detail-stat-value" style="color: var(--color-accent-teal);">${model.key_deff.toFixed(2)}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">Value d_eff</div>
+          <div class="detail-stat-value" style="color: var(--color-accent-violet);">${valDeffDisplay}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">Key / head_dim</div>
+          <div class="detail-stat-value">${model.key_pct.toFixed(1)}%</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">Spectral Gap (kappa)</div>
+          <div class="detail-stat-value" style="color: var(--color-accent-blue);">${model.kappa.toFixed(3)}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">Head Dim</div>
+          <div class="detail-stat-value">${model.head_dim}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">Layers</div>
+          <div class="detail-stat-value">${model.layers}</div>
+        </div>
+        <div class="detail-stat">
+          <div class="detail-stat-label">KV Heads</div>
+          <div class="detail-stat-value">${model.n_kv_heads}</div>
+        </div>
+      `;
+
+      const hasLayerData = model.key_layers !== null;
+      const c = getChartColors();
+      const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: c.textFaint, font: { size: 10, family: "'JetBrains Mono'" } }, grid: { color: c.border } },
+          y: { ticks: { color: c.textFaint, font: { size: 10, family: "'JetBrains Mono'" } }, grid: { color: c.border } },
+        }
+      };
+
+      if (hasLayerData) {
+        // Show charts, hide no-layers message
+        chartsEl.style.display = 'grid';
+        noLayersEl.style.display = 'none';
+
+        const keyLayers = model.key_layers;
+        const kappaLayers = model.kappa_layers;
+        const layerLabels = Array.from({length: keyLayers.length}, (_, i) => i);
+
+        // Chart 1: Key d_eff by layer (real data)
+        chartInstances.push(new Chart(document.getElementById('chart-key-layers'), {
+          type: 'bar',
+          data: {
+            labels: layerLabels,
+            datasets: [{
+              data: keyLayers,
+              backgroundColor: c.teal + '88',
+              borderColor: c.teal,
+              borderWidth: 1,
+              borderRadius: 2,
+            }]
+          },
+          options: {
+            ...chartDefaults,
+            scales: {
+              ...chartDefaults.scales,
+              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Layer', color: c.textFaint, font: { size: 10 } } },
+              y: { ...chartDefaults.scales.y, title: { display: true, text: 'd_eff', color: c.textFaint, font: { size: 10 } }, beginAtZero: true },
+            }
+          }
+        }));
+
+        // Chart 2: Kappa by layer (real data)
+        chartInstances.push(new Chart(document.getElementById('chart-kappa-layers'), {
+          type: 'bar',
+          data: {
+            labels: layerLabels,
+            datasets: [{
+              data: kappaLayers,
+              backgroundColor: c.blue + '88',
+              borderColor: c.blue,
+              borderWidth: 1,
+              borderRadius: 2,
+            }]
+          },
+          options: {
+            ...chartDefaults,
+            scales: {
+              ...chartDefaults.scales,
+              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Layer', color: c.textFaint, font: { size: 10 } } },
+              y: { ...chartDefaults.scales.y, title: { display: true, text: 'kappa', color: c.textFaint, font: { size: 10 } }, beginAtZero: false },
+            }
+          }
+        }));
+
+        // Chart 3: Eigenvalue spectrum (illustrative from d_eff and kappa)
+        const eigenvals = generateEigenvalueSpectrum(model.head_dim, model.key_deff, model.kappa);
+        chartInstances.push(new Chart(document.getElementById('chart-eigenvalues'), {
+          type: 'line',
+          data: {
+            labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
+            datasets: [{
+              data: eigenvals,
+              borderColor: c.cyan,
+              backgroundColor: c.cyan + '18',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: true,
+              tension: 0.3,
+            }]
+          },
+          options: {
+            ...chartDefaults,
+            scales: {
+              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Eigenvalue Index', color: c.textFaint, font: { size: 10 } } },
+              y: { ...chartDefaults.scales.y, type: 'logarithmic', title: { display: true, text: 'Eigenvalue (log)', color: c.textFaint, font: { size: 10 } } },
+            }
+          }
+        }));
+
+        // Chart 4: Cumulative variance
+        const cumvar = [];
+        let sum = eigenvals.reduce((a, b) => a + b, 0);
+        let running = 0;
+        eigenvals.forEach(v => { running += v; cumvar.push((running / sum) * 100); });
+
+        chartInstances.push(new Chart(document.getElementById('chart-cumvar'), {
+          type: 'line',
+          data: {
+            labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
+            datasets: [{
+              data: cumvar,
+              borderColor: c.blue,
+              backgroundColor: c.blue + '18',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: true,
+              tension: 0.3,
+            }]
+          },
+          options: {
+            ...chartDefaults,
+            scales: {
+              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Components', color: c.textFaint, font: { size: 10 } } },
+              y: { ...chartDefaults.scales.y, min: 0, max: 100, title: { display: true, text: 'Cumulative Var %', color: c.textFaint, font: { size: 10 } } },
+            }
+          }
+        }));
+      } else {
+        // No per-layer data: show eigenvalue + cumvar only, plus message
+        chartsEl.style.display = 'grid';
+        noLayersEl.style.display = 'block';
+
+        // Blank out the per-layer canvases with a message
+        const keyCanvas = document.getElementById('chart-key-layers');
+        const kappaCanvas = document.getElementById('chart-kappa-layers');
+
+        // Create placeholder charts with no data
+        chartInstances.push(new Chart(keyCanvas, {
+          type: 'bar',
+          data: { labels: [], datasets: [{ data: [] }] },
+          options: {
+            ...chartDefaults,
+            plugins: {
+              ...chartDefaults.plugins,
+              title: { display: true, text: 'No per-layer data available', color: c.textFaint, font: { size: 12, family: "'General Sans'" } }
+            }
+          }
+        }));
+        chartInstances.push(new Chart(kappaCanvas, {
+          type: 'bar',
+          data: { labels: [], datasets: [{ data: [] }] },
+          options: {
+            ...chartDefaults,
+            plugins: {
+              ...chartDefaults.plugins,
+              title: { display: true, text: 'No per-layer data available', color: c.textFaint, font: { size: 12, family: "'General Sans'" } }
+            }
+          }
+        }));
+
+        // Eigenvalue spectrum (illustrative)
+        const eigenvals = generateEigenvalueSpectrum(model.head_dim, model.key_deff, model.kappa);
+        chartInstances.push(new Chart(document.getElementById('chart-eigenvalues'), {
+          type: 'line',
+          data: {
+            labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
+            datasets: [{
+              data: eigenvals,
+              borderColor: c.cyan,
+              backgroundColor: c.cyan + '18',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: true,
+              tension: 0.3,
+            }]
+          },
+          options: {
+            ...chartDefaults,
+            scales: {
+              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Eigenvalue Index', color: c.textFaint, font: { size: 10 } } },
+              y: { ...chartDefaults.scales.y, type: 'logarithmic', title: { display: true, text: 'Eigenvalue (log)', color: c.textFaint, font: { size: 10 } } },
+            }
+          }
+        }));
+
+        // Cumulative variance
+        const cumvar = [];
+        let sum = eigenvals.reduce((a, b) => a + b, 0);
+        let running = 0;
+        eigenvals.forEach(v => { running += v; cumvar.push((running / sum) * 100); });
+        chartInstances.push(new Chart(document.getElementById('chart-cumvar'), {
+          type: 'line',
+          data: {
+            labels: Array.from({length: model.head_dim}, (_, i) => i + 1),
+            datasets: [{
+              data: cumvar,
+              borderColor: c.blue,
+              backgroundColor: c.blue + '18',
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: true,
+              tension: 0.3,
+            }]
+          },
+          options: {
+            ...chartDefaults,
+            scales: {
+              x: { ...chartDefaults.scales.x, title: { display: true, text: 'Components', color: c.textFaint, font: { size: 10 } } },
+              y: { ...chartDefaults.scales.y, min: 0, max: 100, title: { display: true, text: 'Cumulative Var %', color: c.textFaint, font: { size: 10 } } },
+            }
+          }
+        }));
+      }
+
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function generateEigenvalueSpectrum(d, deff, kappa) {
+      const vals = [];
+      const deffRound = Math.round(deff);
+      for (let i = 0; i < d; i++) {
+        if (i < deffRound) {
+          vals.push(100 * Math.exp(-0.3 * i));
+        } else if (i === deffRound) {
+          vals.push(100 * Math.exp(-0.3 * (deffRound - 1)) / (kappa * 8));
+        } else {
+          vals.push(vals[deffRound] * Math.exp(-0.02 * (i - deffRound)));
+        }
+      }
+      return vals;
+    }
+
+    document.getElementById('detail-close').addEventListener('click', () => {
+      document.getElementById('detail-panel').classList.remove('active');
+      currentDetailModel = null;
+      destroyCharts();
+    });
+
+    // ---- Scroll Animations ----
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

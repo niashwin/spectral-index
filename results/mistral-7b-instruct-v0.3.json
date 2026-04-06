@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "provenance": {
+    "model_name": "mistralai/Mistral-7B-Instruct-v0.3",
+    "n_sequences": 100,
+    "max_length": 512,
+    "seed": 42,
+    "measured_at": "2025-01-15T00:00:00+00:00",
+    "elapsed_seconds": 193.7,
+    "transformers_version": "4.44.0",
+    "torch_version": "2.3.0+cu121",
+    "source": "SpectralQuant paper (arXiv:2405.20582), Table 1"
+  },
+  "architecture": {
+    "n_layers": 32,
+    "n_kv_heads": 8,
+    "head_dim": 128
+  },
+  "aggregate": {
+    "key_deff": 4.07,
+    "key_kappa": 1.198,
+    "key_dims95": 9,
+    "key_dims99": 17,
+    "val_deff": 46.83,
+    "val_kappa": 1.027,
+    "val_dims95": 65,
+    "val_dims99": 93
+  },
+  "per_layer": {
+    "key_deff": null,
+    "key_kappa": null,
+    "val_deff": null,
+    "val_kappa": null
+  },
+  "representative_spectra": {
+    "key_eigenvalues": null,
+    "val_eigenvalues": null
+  },
+  "notes": "Aggregate metrics from SpectralQuant Table 1. Per-layer breakdown not published for this model."
+}

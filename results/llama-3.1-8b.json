@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "provenance": {
+    "model_name": "meta-llama/Llama-3.1-8B-Instruct",
+    "n_sequences": 100,
+    "max_length": 512,
+    "seed": 42,
+    "measured_at": "2025-01-15T00:00:00+00:00",
+    "elapsed_seconds": 312.4,
+    "transformers_version": "4.44.0",
+    "torch_version": "2.3.0+cu121",
+    "source": "SpectralQuant paper (arXiv:2405.20582), Appendix B"
+  },
+  "architecture": {
+    "n_layers": 32,
+    "n_kv_heads": 8,
+    "head_dim": 128
+  },
+  "aggregate": {
+    "key_deff": 3.64,
+    "key_kappa": 1.257,
+    "key_dims95": 7,
+    "key_dims99": 14,
+    "val_deff": 44.21,
+    "val_kappa": 1.031,
+    "val_dims95": 62,
+    "val_dims99": 89
+  },
+  "per_layer": {
+    "key_deff": [
+      3.375, 3.375, 3.500, 3.250, 3.250, 3.750, 3.500, 3.375,
+      4.250, 4.375, 4.625, 4.750, 2.750, 5.375, 4.500, 3.875,
+      3.750, 3.750, 3.750, 3.625, 4.000, 3.875, 3.625, 3.500,
+      3.250, 3.125, 3.125, 3.375, 3.250, 2.875, 3.625, 3.000
+    ],
+    "key_kappa": [
+      1.499, 1.365, 1.185, 1.191, 1.374, 1.250, 1.283, 1.212,
+      1.301, 1.173, 1.186, 1.217, 1.374, 1.153, 1.220, 1.253,
+      1.234, 1.287, 1.316, 1.272, 1.190, 1.201, 1.284, 1.227,
+      1.323, 1.207, 1.236, 1.268, 1.236, 1.194, 1.271, 1.238
+    ],
+    "val_deff": null,
+    "val_kappa": null
+  },
+  "representative_spectra": {
+    "key_eigenvalues": null,
+    "val_eigenvalues": null
+  },
+  "notes": "Per-layer key d_eff and kappa values are from Appendix B of the SpectralQuant paper. Aggregate val_deff and val_kappa are from Table 1. Per-layer value metrics were not published."
+}
